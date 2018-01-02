@@ -55,13 +55,13 @@
 									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSTIVAC_INSTALL_DIR}/products/ndk_2_25_00_09/packages/ti/ndk/inc/bsd&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_ROOT}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/COMMON&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/DRIVER_LIB&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/../../common&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/../DRIVER_LIB&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/../TIVA_LIB&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/mnt_module&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/fs_module&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/clock_module&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/led_control_module&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/cfs_module&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/web_server&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules/telnet_module&quot;"/>
 								</option>
@@ -118,22 +118,8 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="com.ti.ccstudio.buildDefinitions.TMS470.Debug.135134581.utils/spi_flash.c" name="spi_flash.c" rcbsApplicability="disable" resourcePath="utils/spi_flash.c" toolsToInvoke="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.compilerDebug.1687382613.1862134561">
-						<tool id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.compilerDebug.1687382613.1862134561" name="ARM Compiler" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.exe.compilerDebug.1687382613">
-							<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__C_SRCS.1213211117" name="C Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__C_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__CPP_SRCS.1030234327" name="C++ Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__CPP_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__ASM_SRCS.1586835035" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__ASM_SRCS"/>
-							<inputType id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__ASM2_SRCS.574289955" name="Assembly Sources" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compiler.inputType__ASM2_SRCS"/>
-						</tool>
-						<tool command="" customBuildStep="true" id="org.eclipse.cdt.managedbuilder.ui.rcbs.1815690615.2140593589" name="Resource Custom Build Step">
-							<inputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.inputtype.887568164.1633192181" name="Resource Custom Build Step Input Type">
-								<additionalInput kind="additionalinputdependency" paths=""/>
-							</inputType>
-							<outputType id="org.eclipse.cdt.managedbuilder.ui.rcbs.outputtype.1715794959.1555892914" name="Resource Custom Build Step Output Type"/>
-						</tool>
-					</fileInfo>
 					<sourceEntries>
-						<entry excluding="DRIVER_LIB/fifo_lib.c|DRIVER_LIB/dpc_lib.c|modules/net_module/hooks.c|src|tm4c1294ncpdt.cmd" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="TIVA_LIB/driverllib|DRIVER_LIB/fifo_lib.c|DRIVER_LIB/dpc_lib.c|modules/net_module/hooks.c|src|tm4c1294ncpdt.cmd" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -240,7 +226,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="EK_TM4C1294XL.cmd|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="TIVA_LIB/driverllib|EK_TM4C1294XL.cmd|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
