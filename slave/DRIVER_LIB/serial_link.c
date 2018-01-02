@@ -73,6 +73,14 @@ static const uint32_t m_UARTInt[NB_SERIAL] =
     INT_UART0, INT_UART1, INT_UART2
 };
 
+typedef void (*pIntFunction)(void);
+static const pIntFunction m_IntFuncTable[] =
+{
+        serialLinkIntHandler0,
+        serialLinkIntHandler1,
+        serialLinkIntHandler2
+};
+
 /////////////////////////////////////////////////////////////////////////////////
 // Exported variables
 /////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +105,7 @@ static char receivedChar;
 /// \return
 ///
 /////////////////////////////////////////////////////////////////////////////////
-uint8_t SerialLink_Init(uint8_t link)
+uint8_t SerialLink_Init(SerialLinkNumber_t link)
 {
 	uint8_t ret = 0;
 
@@ -155,6 +163,7 @@ uint8_t SerialLink_Init(uint8_t link)
     	m_SerialLinkList[link].pReceptionArg = &receivedChar;
 
     	UARTIntDisable(m_SerialLinkList[link].uartNb, 0xFFFFFF);
+    	UARTIntRegister(m_UARTInt[link], m_IntFuncTable[link]);
     	UARTIntEnable(m_SerialLinkList[link].uartNb, UART_INT_RX | UART_INT_RT);
     	UARTIntClear(m_SerialLinkList[link].uartNb, UART_INT_RX | UART_INT_RT);
     	IntEnable(m_UARTInt[link]);
