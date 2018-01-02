@@ -1,19 +1,19 @@
 /////////////////////////////////////////////////////////////////////////////////
-/// \addtogroup COMMON
+/// \addtogroup MACRO
 /// \{
 ///
 ///
 /// \file
-/// \brief Fichier en-tete du module COMMON
+/// \brief Fichier en-tete du module MACRO
 ///
 ///
 ///
 /////////////////////////////////////////////////////////////////////////////////
 
 // Define to prevent recursive inclusion
-#ifndef __COMMON_H_
+#ifndef __MACRO_H_
 /// \cond IGNORE_FOLLOWING
-#define __COMMON_H_
+#define __MACRO_H_
 /// \endcond
 
 #ifdef __cplusplus
@@ -31,47 +31,6 @@ extern "C"
 // Exported types
 /////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-/// \brief RGB Control structure
-typedef struct
-{
-	uint16_t red;
-	uint16_t green;
-	uint16_t blue;
-	uint16_t luminosity;
-} tRGBControl;
-
-/// \name Date time exchange
-/// \{
-
-/// \brief Day of weef enum
-typedef enum
-{
-	LUNDI,   //!< LUNDI
-	MARDI,   //!< MARDI
-	MERCREDI,//!< MERCREDI
-	JEUDI,   //!< JEUDI
-	VENDREDI,//!< VENDREDI
-	SAMEDI,  //!< SAMEDI
-	DIMANCHE //!< DIMANCHE
-}eDayOfWeek;
-
-/// \brief Date time structure
-typedef struct
-{
-	uint16_t year;
-	uint8_t month;
-	uint8_t day;
-	eDayOfWeek dayOfWeek;
-	uint8_t hour;
-	uint8_t minute;
-	uint8_t second;
-}tDateTime;
-
-/// \}
-
 /////////////////////////////////////////////////////////////////////////////////
 // Exported constants
 /////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +38,9 @@ typedef struct
 /////////////////////////////////////////////////////////////////////////////////
 // Exported macro
 /////////////////////////////////////////////////////////////////////////////////
-
+#ifdef __TI_ARM__
+#define PACK(typedesc)  typedesc __attribute__((packed))
+#endif
 /////////////////////////////////////////////////////////////////////////////////
 // Exported functions
 /////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +49,7 @@ typedef struct
 }
 #endif
 
-#endif //__COMMON_H_
+#endif //__MACRO_H_
 
 ///
 /// \}
