@@ -1,0 +1,227 @@
+/////////////////////////////////////////////////////////////////////////////////
+/// \addtogroup mnt
+/// \{
+/// \author Dev
+///
+///	\brief 
+///
+///
+/// \file
+/// \brief Fichier source du module mnt
+///
+///
+///
+/////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////
+// Includes
+/////////////////////////////////////////////////////////////////////////////////
+#include "system.h"
+//#include <stdbool.h>
+//
+///* XDCtools Header files */
+//#include <xdc/std.h>
+//#include <xdc/runtime/System.h>
+//
+///* BIOS Header files */
+//#include <ti/sysbios/BIOS.h>
+//#include <ti/sysbios/knl/Task.h>
+//
+//#include <inc/hw_ints.h>
+//#include <inc/hw_memmap.h>
+//#include <inc/hw_types.h>
+//#include <inc/hw_gpio.h>
+//
+//#include <driverlib/flash.h>
+//#include <driverlib/gpio.h>
+//#include <driverlib/i2c.h>
+//#include <driverlib/pin_map.h>
+//#include <driverlib/sysctl.h>
+//#include <driverlib/uart.h>
+//
+#include <utils/uartstdio.h>
+//#include <utils/cmdline.h>
+
+//#include <ti/sysbios/family/arm/m3/Timer.h>
+//#include <ti/sysbios/hal/Timer.h>
+
+
+#include "mnt.h"
+#include "mnt_commands.h"
+#include "txt_lib.h"
+/////////////////////////////////////////////////////////////////////////////////
+// Private typedef
+/////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////
+// Private define
+/////////////////////////////////////////////////////////////////////////////////
+#define MNT_TASKSTACKSIZE	2048
+#define MNTWORKINGBUFSIZE	128
+/////////////////////////////////////////////////////////////////////////////////
+// Private macro
+/////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////
+// Private variables
+/////////////////////////////////////////////////////////////////////////////////
+Task_Struct Mnt_taskStruct;
+static Char Mnt_taskStack[MNT_TASKSTACKSIZE];
+char MNTWorkingBuffer[MNTWORKINGBUFSIZE];
+static Hwi_Struct hwiStructUart;
+static Timer_Handle timer0;
+static Semaphore_Handle semPeriodic;
+/////////////////////////////////////////////////////////////////////////////////
+// Exported variables
+/////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////
+// Private function prototypes
+/////////////////////////////////////////////////////////////////////////////////
+static Void MNT_TaskBody(UArg arg0, UArg arg1);
+void uarthiwint(uint32_t arg);
+
+static void cbPeriodicFunc(UArg arg0);
+
+/////////////////////////////////////////////////////////////////////////////////
+// Functions
+/////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+void MNT_init(void)
+{
+    Task_Params taskParams;
+//    Hwi_Handle handle;
+    Bool res;
+
+
+    timer0 = Timer_create(Timer_ANY, cbPeriodicFunc, NULL, NULL);
+
+    res = Timer_setPeriodMicroSecs(timer0, 50000);
+    if(res == false)
+    {
+    	while(1)
+    	{
+
+    	}
+    }
+
+
+    //Semaphore creation
+    semPeriodic = Semaphore_create(0, NULL, NULL);
+
+
+#ifdef UART_BUFFERED
+    Hwi_construct(&hwiStructUart, 21, uarthiwint, NULL, NULL);
+#endif
+    UARTStdioConfig(0, 115200, CPU_CLOCK);
+
+//    UARTprintf("%s\n", LocalIPAddr);
+
+    Task_Params_init(&taskParams);
+
+    taskParams.stackSize = MNT_TASKSTACKSIZE;
+    taskParams.stack = Mnt_taskStack;
+//    taskParams.priority = 12;
+    Task_construct(&Mnt_taskStruct, (Task_FuncPtr)MNT_TaskBody, &taskParams, NULL);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static Void MNT_TaskBody(UArg arg0, UArg arg1)
+{
+	int ret;
+	uint16_t i;
+
+	UARTprintf("\n/>");
+	Timer_start(timer0);
+
+	while(1)
+	{
+
+
+//		Task_sleep(100);
+
+		Semaphore_pend(semPeriodic, BIOS_WAIT_FOREVER);
+#ifdef UART_BUFFERED
+		if( UARTPeek('\r') >= 0)
+		{
+
+//			Timer_stop(timer0);
+			UARTgets(MNTWorkingBuffer, MNTWORKINGBUFSIZE);
+#else
+		if( UARTgets(MNTWorkingBuffer, MNTWORKINGBUFSIZE) > 0)
+		{
+#endif //UART_BUFFERED
+			ret = CmdLineProcess(MNTWorkingBuffer);
+			switch (ret)
+			{
+				case CMDLINE_BAD_CMD:
+					UARTprintf("Unkwown command\n");
+					break;
+				case CMDLINE_TOO_MANY_ARGS:
+					UARTprintf("Too many args in command\n");
+					break;
+				default:
+					break;
+			}
+			UARTprintf("\n/>");
+//			Timer_start(timer0);
+
+		}
+#ifdef UART_BUFFERED
+		UARTFlushTx(0);
+#endif
+//		Task_sleep(100);
+	}
+
+}
+
+#ifdef UART_BUFFERED
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+void uarthiwint(uint32_t arg)
+{
+
+	Hwi_clearInterrupt(21);
+	UARTStdioIntHandler();
+}
+#endif
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static void cbPeriodicFunc(UArg arg0)
+{
+	Semaphore_post(semPeriodic);
+
+}
+
+
+///
+/// \}
+///

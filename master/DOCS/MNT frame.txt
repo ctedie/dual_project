@@ -1,0 +1,17 @@
+                                 Size           Offset
+1 - Source address				| 8           | 0
+2 - Dest Address    			| 8           | 1
+3 - Frame Param - isParted    	| 32-1        | 2
+4 - Frame Param - partNumber    | 32-15       | 
+5 - Frame Param - totalPart    	| 32-15       | 
+6 - Frame Param - Reserved		| 32-1		  |
+7 - Command						| 8           | 6
+8 - DataSize					| 16          | 7
+9 - Data						| 1024*8      | 9
+
+| 1| 2| 3  4  5 6 | 7|   8 |  9
+ 02 01 00 00 00 00 01 02 00 01 00 01
+ 
+ RGB Send
+| 1| 2| 3  4  5 6 | 7|   8 |  9
+ 02 01 00 00 00 00 03 02 00 00 ff 00 ff 00 ff 00 f0
