@@ -30,6 +30,8 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/uart.h"
 
+#include "common.h"
+#include "exchange.h"
 #include "serial_link.h"
 
 /////////////////////////////////////////////////////////////////////////////////
