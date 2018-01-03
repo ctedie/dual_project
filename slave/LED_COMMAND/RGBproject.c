@@ -94,6 +94,8 @@ static volatile unsigned long ulHibModeEntryCount;
 static char g_cInput[128];
 
 static unsigned long index = 0;
+
+uint32_t m_cpuClock=0;
 //*****************************************************************************
 //
 // The error routine that is called if the driver library encounters an error.
@@ -159,6 +161,7 @@ SysTickIntHandler(void)
 /// 			then manages the application context duties of the system.
 ///
 //*****************************************************************************
+static uint8_t car = 0xAA;
 int
 main(void)
 {
@@ -195,7 +198,7 @@ main(void)
     ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
     ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-
+    m_cpuClock = SysCtlClockGet();
 
     //------------ SPI Test -----------------
 //
@@ -214,13 +217,13 @@ main(void)
     //------------ End SPI Test -----------------
 
 //------------------ UART Com Test ---------------------
-   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
-   GPIOPinConfigure(GPIO_PE4_U5RX);
-   GPIOPinConfigure(GPIO_PE5_U5TX);
-   GPIOPinTypeUART(GPIO_PORTE_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+   GPIOPinConfigure(GPIO_PB0_U1RX);
+   GPIOPinConfigure(GPIO_PB1_U1TX);
+   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART5);
-   UARTConfigSetExpClk(UART5_BASE, SysCtlClockGet(), 9600,
+   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+   UARTConfigSetExpClk(UART1_BASE, m_cpuClock, 9600,
                            (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
                             UART_CONFIG_WLEN_8));
 
@@ -288,7 +291,7 @@ main(void)
 //        UARTgets(g_cInput,sizeof(g_cInput));
 //        RGBProcess(g_cInput);
     	SysCtlDelay(2 * (SysCtlClockGet() / 3));
-    	UARTCharPut(UART5_BASE, 0xAA);
+//    	UARTCharPut(UART1_BASE, car);
     	UARTCharPut(UART0_BASE, 'A');
 //    	SerialLink_Write(0, "Hello World !!!\n", 16);
     }

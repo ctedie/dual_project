@@ -38,6 +38,20 @@
 // Private typedef
 /////////////////////////////////////////////////////////////////////////////////
 
+typedef struct
+{
+	uint32_t uartNb;
+	SerialLinkSpeed_t baudrate;
+	SerialLinkDataSize_t dataSize;
+	SerialLinkParity_t parity;
+	SerialLinkStopBit_t stopBit;
+	SerialLinkCallback cbReception;
+	void* pReceptionArg;
+	SerialLinkCallback cbTransmission;
+	void* pTransmissionArg;
+	bool initOK;
+}SerialLink_t;
+
 /////////////////////////////////////////////////////////////////////////////////
 // Private define
 /////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +67,15 @@ SerialLink_t m_SerialLinkList[NB_SERIAL] =
 {
 		{
 				.uartNb = UART0_BASE,
+				.baudrate = B115200,
+				.dataSize = BIT_8,
+				.parity = PARITY_NONE,
+				.cbReception = NULL,
+				.cbTransmission = NULL,
+				.initOK = false
+		},
+		{
+				.uartNb = UART1_BASE,
 				.baudrate = B115200,
 				.dataSize = BIT_8,
 				.parity = PARITY_NONE,

@@ -72,17 +72,17 @@ typedef enum
 
 typedef struct
 {
-	uint32_t uartNb;
 	SerialLinkSpeed_t baudrate;
 	SerialLinkDataSize_t dataSize;
 	SerialLinkParity_t parity;
 	SerialLinkStopBit_t stopBit;
 	SerialLinkCallback cbReception;
 	void* pReceptionArg;
-	SerialLinkCallback cbTransmission;
-	void* pTransmissionArg;
+	SerialLinkCallback cbEndOfTransmission;
+	void* pEndOfTransmissionArg;
 	bool initOK;
-}SerialLink_t;
+}SerialLinkConfig_t;
+
 /////////////////////////////////////////////////////////////////////////////////
 // Exported constants
 /////////////////////////////////////////////////////////////////////////////////

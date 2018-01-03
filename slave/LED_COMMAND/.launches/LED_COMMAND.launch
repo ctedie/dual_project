@@ -17,7 +17,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.Stellaris In-Circuit Debug Interface_0/CORTEX_M4_0" value="${build_artifact:LED_COMMAND}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.Stellaris In-Circuit Debug Interface_0/CORTEX_M4_0" value="LED_COMMAND"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:LED_COMMAND}"/>
-<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.Stellaris In-Circuit Debug Interface_0/CORTEX_M4_0" value="D:/SVN\STELLARIS_EVAL_BOARD\TRUNK\LED_COMMAND\Debug\LED_COMMAND.out"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.Stellaris In-Circuit Debug Interface_0/CORTEX_M4_0" value="D:/GIT\dual_project\slave\LED_COMMAND\Debug\LED_COMMAND.out"/>
 <mapAttribute key="com.ti.ccstudio.debug.ui.displayFormats">
 <mapEntry key="Stellaris In-Circuit Debug Interface_0/CORTEX_M4_0@##separator##@0" value="32-Bit Hex - TI Style"/>
 </mapAttribute>
