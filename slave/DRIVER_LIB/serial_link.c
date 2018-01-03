@@ -275,8 +275,8 @@ static void generalIntHandler(uint32_t uartNb)
 	{
 		if(m_SerialLinkList[uartNb].cbReception != NULL)
 		{
-		receivedChar = (char)UARTCharGetNonBlocking(m_SerialLinkList[uartNb].uartNb);
-		m_SerialLinkList[uartNb].cbReception(m_SerialLinkList[uartNb].uartNb, &receivedChar);
+            receivedChar = (char)UARTCharGetNonBlocking(m_SerialLinkList[uartNb].uartNb);
+            m_SerialLinkList[uartNb].cbReception(m_SerialLinkList[uartNb].uartNb, &receivedChar);
 		}
 	}
 	else if(intStatus == UART_INT_TX)
