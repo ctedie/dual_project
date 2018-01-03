@@ -40,15 +40,15 @@
 
 typedef struct
 {
-	uint32_t uartNb;
+	uint32_t uartBase;
 	SerialLinkSpeed_t baudrate;
 	SerialLinkDataSize_t dataSize;
 	SerialLinkParity_t parity;
 	SerialLinkStopBit_t stopBit;
-	SerialLinkCallback cbReception;
+	SerialLinkReceiveCallback cbReception;
 	void* pReceptionArg;
-	SerialLinkCallback cbTransmission;
-	void* pTransmissionArg;
+	SerialLinkTransmitCallback cbTransmition;
+	void* pTransmitionArg;
 	bool initOK;
 }SerialLink_t;
 
@@ -66,22 +66,11 @@ typedef struct
 SerialLink_t m_SerialLinkList[NB_SERIAL] =
 {
 		{
-				.uartNb = UART0_BASE,
-				.baudrate = B115200,
-				.dataSize = BIT_8,
-				.parity = PARITY_NONE,
-				.cbReception = NULL,
-				.cbTransmission = NULL,
-				.initOK = false
+				.uartBase = UART0_BASE,
 		},
+
 		{
-				.uartNb = UART1_BASE,
-				.baudrate = B115200,
-				.dataSize = BIT_8,
-				.parity = PARITY_NONE,
-				.cbReception = NULL,
-				.cbTransmission = NULL,
-				.initOK = false
+				.uartBase = UART1_BASE,
 		}
 };
 
@@ -130,11 +119,27 @@ static char receivedChar;
 /// \return
 ///
 /////////////////////////////////////////////////////////////////////////////////
-uint8_t SerialLink_Init(SerialLinkNumber_t link)
+uint8_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *pConfig)
 {
 	uint8_t ret = 0;
 
 	uint32_t config = 0;
+
+	if(pConfig == NULL)
+	{
+		//Error
+		return 1;
+	}
+
+	m_SerialLinkList[link].dataSize = pConfig->dataSize;
+	m_SerialLinkList[link].parity = pConfig->parity;
+	m_SerialLinkList[link].stopBit = pConfig->stopBit;
+	m_SerialLinkList[link].baudrate = pConfig->baudrate;
+	m_SerialLinkList[link].cbReception = pConfig->cbReception;
+	m_SerialLinkList[link].pReceptionArg = pConfig->pReceptionArg;
+	m_SerialLinkList[link].cbTransmition = pConfig->cbEndOfTransmition;
+	m_SerialLinkList[link].pTransmitionArg = pConfig->pEndOfTransmitionArg;
+
 
 	switch (m_SerialLinkList[link].dataSize)
 	{
@@ -174,7 +179,7 @@ uint8_t SerialLink_Init(SerialLinkNumber_t link)
 
     SysCtlPeripheralEnable(m_UARTPeriph[link]);
 
-	UARTConfigSetExpClk((uint32_t)m_SerialLinkList[link].uartNb,
+	UARTConfigSetExpClk((uint32_t)m_SerialLinkList[link].uartBase,
 						(uint32_t)SysCtlClockGet(),
 						(uint32_t)m_SerialLinkList[link].baudrate,
 						(uint32_t)config
@@ -182,19 +187,16 @@ uint8_t SerialLink_Init(SerialLinkNumber_t link)
 
     if(m_SerialLinkList[link].cbReception != NULL)
     {
-    	m_SerialLinkList[link].cbReception = testCallback;
+    	UARTFIFOLevelSet(m_SerialLinkList[link].uartBase, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
 
-    	UARTFIFOLevelSet(m_SerialLinkList[link].uartNb, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
-    	m_SerialLinkList[link].pReceptionArg = &receivedChar;
-
-    	UARTIntDisable(m_SerialLinkList[link].uartNb, 0xFFFFFF);
-    	UARTIntRegister(m_UARTInt[link], m_IntFuncTable[link]);
-    	UARTIntEnable(m_SerialLinkList[link].uartNb, UART_INT_RX | UART_INT_RT);
-    	UARTIntClear(m_SerialLinkList[link].uartNb, UART_INT_RX | UART_INT_RT);
+    	UARTIntDisable(m_SerialLinkList[link].uartBase, 0xFFFFFF);
+    	UARTIntRegister(m_SerialLinkList[link].uartBase, m_IntFuncTable[link]);
+    	UARTIntEnable(m_SerialLinkList[link].uartBase, UART_INT_RX | UART_INT_RT);
+    	UARTIntClear(m_SerialLinkList[link].uartBase, UART_INT_RX | UART_INT_RT);
     	IntEnable(m_UARTInt[link]);
     }
 
-    UARTEnable(m_SerialLinkList[link].uartNb);
+    UARTEnable(m_SerialLinkList[link].uartBase);
 //    m_SerialLinkList[uartNb].pReceptionArg =
 
 
@@ -226,7 +228,7 @@ uint8_t SerialLink_Write(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
 		for (i = 0; i < size; ++i)
 		{
 
-			UARTCharPut(m_SerialLinkList[sLink].uartNb, pBuffer[i]);
+			UARTCharPut(m_SerialLinkList[sLink].uartBase, pBuffer[i]);
 		}
 	}
 
@@ -258,7 +260,7 @@ uint8_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
 		for (i = 0; i < size; ++i)
 		{
 
-			pBuffer[i] = UARTCharGet(m_SerialLinkList[sLink].uartNb);
+			pBuffer[i] = UARTCharGet(m_SerialLinkList[sLink].uartBase);
 		}
 	}
 
@@ -272,41 +274,44 @@ uint8_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
 
 void serialLinkIntHandler0(void)
 {
-	generalIntHandler(UART0_BASE);
+	generalIntHandler(SERIAL1);
 }
 
 void serialLinkIntHandler1(void)
 {
-	generalIntHandler(UART1_BASE);
+	generalIntHandler(SERIAL2);
 }
 
 void serialLinkIntHandler2(void)
 {
-	generalIntHandler(UART2_BASE);
+	generalIntHandler(SERIAL3);
 }
 
 
 static void generalIntHandler(uint32_t uartNb)
 {
 	uint32_t intStatus;
-	char car;
+	uint8_t car;
 
-	intStatus = UARTIntStatus(uartNb, true);
-	UARTIntClear(uartNb, intStatus);
+	intStatus = UARTIntStatus(m_SerialLinkList[uartNb].uartBase, true);
+	UARTIntClear(m_SerialLinkList[uartNb].uartBase, intStatus);
 
 	if(intStatus & (UART_INT_RX | UART_INT_RT))
 	{
 		if(m_SerialLinkList[uartNb].cbReception != NULL)
 		{
-            receivedChar = (char)UARTCharGetNonBlocking(m_SerialLinkList[uartNb].uartNb);
-            m_SerialLinkList[uartNb].cbReception(m_SerialLinkList[uartNb].uartNb, &receivedChar);
+			if(UARTCharsAvail(m_SerialLinkList[uartNb].uartBase))
+            {
+				car = (uint8_t)UARTCharGetNonBlocking(m_SerialLinkList[uartNb].uartBase);
+				m_SerialLinkList[uartNb].cbReception(m_SerialLinkList[uartNb].pReceptionArg, car);
+            }
 		}
 	}
 	else if(intStatus == UART_INT_TX)
 	{
-		if(m_SerialLinkList[uartNb].cbTransmission != NULL)
+		if(m_SerialLinkList[uartNb].cbTransmition != NULL)
 		{
-			m_SerialLinkList[uartNb].cbTransmission(m_SerialLinkList[uartNb].uartNb, m_SerialLinkList[uartNb].pTransmissionArg);
+			m_SerialLinkList[uartNb].cbTransmition(m_SerialLinkList[uartNb].pTransmitionArg);
 		}
 
 	}
@@ -323,9 +328,6 @@ static uint16_t cptReceivedChar;
 void testCallback(uint8_t uartNb, void* pArg)
 {
 	char* character = pArg;
-
-
-
 
 }
 

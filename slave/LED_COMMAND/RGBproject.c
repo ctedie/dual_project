@@ -112,6 +112,19 @@ __error__(char *pcFilename, unsigned long ulLine)
 void RGBProcess(char* pcStr);
 void cbController(void);
 void cbSPI(void);
+void cbUARTCharReceived(void *pData, uint8_t car);
+
+uint32_t m_nbCharReceived = 0;
+SerialLinkConfig_t serial =
+{
+		.baudrate = B115200,
+		.dataSize = BIT_8,
+		.parity = PARITY_NONE,
+		.cbReception = cbUARTCharReceived,
+		.pReceptionArg = &m_nbCharReceived,
+		.cbEndOfTransmition = NULL
+};
+
 //*****************************************************************************
 //
 // Called by the NVIC as a result of SysTick Timer rollover interrupt flag
@@ -235,7 +248,7 @@ main(void)
 //    UARTprintf("Type 'help' for a list of commands\n");
 //    UARTprintf("> ");
 
-    SerialLink_Init(0);
+    SerialLink_Init(0, &serial);
     SerialLink_Write(0, "Hello World !!!", 16);
 
     //
@@ -335,4 +348,13 @@ void cbController(void)
 void cbSPI(void)
 {
 
+}
+
+//FIXME for test. Must not be here
+static uint8_t testReceivedChar;
+void cbUARTCharReceived(void *pData, uint8_t car)
+{
+	uint32_t *number = (uint32_t*)pData;
+	testReceivedChar = car;
+	(*number)++;
 }

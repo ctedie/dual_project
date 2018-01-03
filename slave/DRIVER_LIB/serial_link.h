@@ -30,6 +30,8 @@ extern "C"
 /////////////////////////////////////////////////////////////////////////////////
 
 typedef void (*SerialLinkCallback)(uint8_t sLink, void* pArg);
+typedef void (*SerialLinkReceiveCallback)(void *pData, uint8_t car);
+typedef void (*SerialLinkTransmitCallback)(void *pData);
 
 
 typedef enum
@@ -76,10 +78,10 @@ typedef struct
 	SerialLinkDataSize_t dataSize;
 	SerialLinkParity_t parity;
 	SerialLinkStopBit_t stopBit;
-	SerialLinkCallback cbReception;
+	SerialLinkReceiveCallback cbReception;
 	void* pReceptionArg;
-	SerialLinkCallback cbEndOfTransmission;
-	void* pEndOfTransmissionArg;
+	SerialLinkTransmitCallback cbEndOfTransmition;
+	void* pEndOfTransmitionArg;
 	bool initOK;
 }SerialLinkConfig_t;
 
@@ -95,7 +97,7 @@ typedef struct
 // Exported functions
 /////////////////////////////////////////////////////////////////////////////////
 
-uint8_t SerialLink_Init(uint8_t sLink);
+uint8_t SerialLink_Init(uint8_t sLink, SerialLinkConfig_t *pConfig);
 uint8_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16_t size);
 uint8_t SerialLink_Write(uint8_t sLink, uint8_t *pBuffer, uint16_t size);
 
