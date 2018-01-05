@@ -36,12 +36,12 @@
 /////////////////////////////////////////////////////////////////////////////////
 // Private typedef
 /////////////////////////////////////////////////////////////////////////////////
-///
-typedef void (*cbCharTreatment_t)(struct rx_data *pDataRx, uint8_t car);
+
+//typedef void (*cbCharTreatment_t)(rx_data_t *pDataRx, uint8_t car);
 
 typedef struct rx_data
 {
-    cbCharTreatment_t charTreatment;
+    void (*charTreatment)(struct rx_data *pDataRx, uint8_t car);
 
     uint8_t *pMsg;
     uint8_t *receivedChar;
@@ -49,6 +49,8 @@ typedef struct rx_data
 
     cbNotifyRx_t cbNotifyRx;
     void* pDataNotifyRX;
+
+    cbAllocMsg_t cbAllocMsg;
 
 }rx_data_t;
 
@@ -110,7 +112,7 @@ bool SerialLinkFrameProtocoleInit(void)
 /////////////////////////////////////////////////////////////////////////////////
 static void charReceived(void *pData, uint8_t car)
 {
-    rx_data_t* pDataRx = &pData;
+    rx_data_t* pDataRx = (rx_data_t*)pData;
     pDataRx->charTreatment(pDataRx, car);
 }
 
@@ -126,7 +128,7 @@ static void waitStartDLE(rx_data_t *pDataRx, uint8_t car)
 {
     if(car == DLE)
     {
-        pDataRx->charTreatment = (cbCharTreatment_t)waitSTX;
+        pDataRx->charTreatment = waitSTX;
     }
 }
 
@@ -152,16 +154,16 @@ static void waitSTX(rx_data_t *pDataRx, uint8_t car)
             //Initialise the message informations
             pDataRx->msgSize = 0;
             pDataRx->receivedChar =  pDataRx->pMsg;
-            pDataRx->charTreatment = (cbCharTreatment_t)waitDataWithoutDLE;
+            pDataRx->charTreatment = waitDataWithoutDLE;
         }
         else //No available buffer
         {
-            pDataRx->charTreatment = (cbCharTreatment_t)waitStartDLE;
+            pDataRx->charTreatment = waitStartDLE;
         }
     }
     else
     {
-        pDataRx->charTreatment = (cbCharTreatment_t)waitStartDLE;
+        pDataRx->charTreatment = waitStartDLE;
     }
 }
 
@@ -177,7 +179,7 @@ static void waitDataWithoutDLE(rx_data_t *pDataRx, uint8_t car)
 {
     if(car == DLE)
     {
-        pDataRx->charTreatment = (cbCharTreatment_t)waitDataWithDLE;
+        pDataRx->charTreatment = waitDataWithDLE;
     }
     else
     {
@@ -198,7 +200,7 @@ static void waitDataWithoutDLE(rx_data_t *pDataRx, uint8_t car)
 static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
 {
 
-    pDataRx->charTreatment = (cbCharTreatment_t)waitDataWithoutDLE;
+    pDataRx->charTreatment = waitDataWithoutDLE;
 
     if(car == DLE)
     {
@@ -215,7 +217,7 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
     else if(car == ETX)
     {
         // Fin de la trame : Notifier la couche supérieure
-        pDataRx->charTreatment = (cbCharTreatment_t)waitStartDLE;
+        pDataRx->charTreatment = waitStartDLE;
         pDataRx->cbNotifyRx(pDataRx->pDataNotifyRX, pDataRx->pMsg, pDataRx->msgSize);
 
         //Liberer la memoire msg
@@ -225,7 +227,7 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
     {
         //Erreur : Abandonner la trame
 
-        pDataRx->charTreatment = (cbCharTreatment_t)waitStartDLE;
+        pDataRx->charTreatment = waitStartDLE;
 
         //Liberer la memoire msg
         pDataRx->pMsg = NULL;
