@@ -30,7 +30,7 @@ extern "C"
 // Exported types
 /////////////////////////////////////////////////////////////////////////////////
 typedef void (*cbNotifyRx_t)(void *pData, uint8_t *pMsg, uint16_t size);
-typedef void (*cbAllocMsg_t)(void* pMsg);
+typedef uint8_t* (*cbAllocMsg_t)(void);
 typedef void (*cbFreeMsg_t)(void* pMsg);
 /////////////////////////////////////////////////////////////////////////////////
 // Exported constants
@@ -43,6 +43,17 @@ typedef void (*cbFreeMsg_t)(void* pMsg);
 /////////////////////////////////////////////////////////////////////////////////
 // Exported functions
 /////////////////////////////////////////////////////////////////////////////////
+uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
+									SerialLinkSpeed_t baurate,
+									SerialLinkDataSize_t bitSize,
+									SerialLinkParity_t parity,
+									SerialLinkStopBit_t stopBit,
+									cbNotifyRx_t cbNotifyRx,
+									void* pDataNotifyRx,
+									cbAllocMsg_t cbAllocMsg,
+									cbFreeMsg_t cbFreeMsg
+									);
+
 
 #ifdef __cplusplus
 }

@@ -110,7 +110,7 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 									SerialLinkDataSize_t bitSize,
 									SerialLinkParity_t parity,
 									SerialLinkStopBit_t stopBit,
-									cbNotifyRx_t pcbNotifyRx,
+									cbNotifyRx_t cbNotifyRx,
 									void* pDataNotifyRx,
 									cbAllocMsg_t cbAllocMsg,
 									cbFreeMsg_t cbFreeMsg
@@ -120,10 +120,10 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 //	bool channelFound = false;
 	uint8_t channelNumber = 0xFF;
 	channel_t *pChannel = NULL;
-
+	int i;
 
 	//Find a free channels and open it
-	for (int i = 0; i < MAX_CHANNELS_NUMBER; ++i)
+	for (i = 0; i < MAX_CHANNELS_NUMBER; ++i)
 	{
 		if(m_channels[i].isOpen == false)
 		{
@@ -141,15 +141,17 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 	}
 
 
+	pChannel->rxMsg.cbAllocMsg = cbAllocMsg;
+	pChannel->rxMsg.cbFreeMsg = cbFreeMsg;
+	pChannel->rxMsg.cbNotifyRx = cbNotifyRx;
+	pChannel->rxMsg.pDataNotifyRX = pDataNotifyRx;
+
 	linkConf.baudrate = baurate;
 	linkConf.dataSize = bitSize;
 	linkConf.parity = parity;
 	linkConf.stopBit = stopBit;
 	linkConf.cbReception = charReceived;
-	linkConf.pReceptionArg = &pChannel->rxMsg;
-
-	pChannel->rxMsg.cbAllocMsg = cbAllocMsg;
-	pChannel->rxMsg.cbFreeMsg = cbFreeMsg;
+	linkConf.pReceptionData = &pChannel->rxMsg;
 
 	if(SerialLink_Init(pChannel->linkNumber, &linkConf) != SERIAL_LINK_SUCCESS)
 	{
@@ -157,6 +159,7 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 	}
 
 	pChannel->isOpen = true;
+	pChannel->rxMsg.charTreatment = waitStartDLE;
 	return channelNumber;
 }
 
@@ -209,7 +212,9 @@ static void waitSTX(rx_data_t *pDataRx, uint8_t car)
         if(pDataRx->pMsg == NULL) //No previous buffer so try to alloc one
         {
             //TODO Alloc pMsg
-        	pDataRx->cbAllocMsg(pDataRx->pMsg);
+//        	pDataRx->cbAllocMsg(pDataRx->pMsg);
+        	pDataRx->pMsg = pDataRx->cbAllocMsg();
+
         }
 
         if(pDataRx->pMsg)
@@ -269,6 +274,7 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
     {
         //DLE double Stocker 1 DLE en tant que data
         *pDataRx->receivedChar = car;
+        pDataRx->receivedChar++;
         pDataRx->msgSize++;
     }
     else if(car == STX)

@@ -43,7 +43,7 @@ typedef struct
 	uint32_t uartBase;
 
 	SerialLinkReceiveCallback cbReception;
-	void* pReceptionArg;
+	void* pReceptionData;
 	SerialLinkTransmitCallback cbTransmition;
 	void* pTransmitionArg;
 	bool initOK;
@@ -129,7 +129,7 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 	}
 
 	m_SerialLinkList[link].cbReception = pConfig->cbReception;
-	m_SerialLinkList[link].pReceptionArg = pConfig->pReceptionArg;
+	m_SerialLinkList[link].pReceptionData = pConfig->pReceptionData;
 	m_SerialLinkList[link].cbTransmition = pConfig->cbEndOfTransmition;
 	m_SerialLinkList[link].pTransmitionArg = pConfig->pEndOfTransmitionArg;
 
@@ -144,7 +144,6 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 			break;
 		default:
 			return SERIAL_LINK_BAD_CONFIG;
-			break;
 	}
 
 	switch (pConfig->parity)
@@ -294,7 +293,7 @@ static void generalIntHandler(uint32_t uartNb)
 			if(UARTCharsAvail(m_SerialLinkList[uartNb].uartBase))
             {
 				car = (uint8_t)UARTCharGetNonBlocking(m_SerialLinkList[uartNb].uartBase);
-				m_SerialLinkList[uartNb].cbReception(m_SerialLinkList[uartNb].pReceptionArg, car);
+				m_SerialLinkList[uartNb].cbReception(m_SerialLinkList[uartNb].pReceptionData, car);
             }
 		}
 	}

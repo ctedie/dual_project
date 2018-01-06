@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -52,6 +53,7 @@
 
 #include "RGBProject.h"
 #include "serial_link.h"
+#include "serial_link_frame_protocol.h"
 
 //*****************************************************************************
 //
@@ -121,7 +123,7 @@ SerialLinkConfig_t serial =
 		.dataSize = BIT_8,
 		.parity = PARITY_NONE,
 		.cbReception = cbUARTCharReceived,
-		.pReceptionArg = &m_nbCharReceived,
+		.pReceptionData = &m_nbCharReceived,
 		.cbEndOfTransmition = NULL
 };
 
@@ -164,6 +166,33 @@ SysTickIntHandler(void)
 
 
 }
+
+static uint8_t m_frame[1024];
+
+static uint8_t* AllocData(void)
+{
+	return m_frame;
+//	pData = malloc(1024);
+}
+
+static void FreeData(uint8_t *pData)
+{
+//	free(pData);
+	pData = NULL;
+}
+
+static uint16_t nbReceivedFrame = 0;
+uint16_t m_lastFrameSize = 0;
+static void FrameReceived(void* pData, uint8_t *pMsg, uint16_t size)
+{
+	uint16_t *val = (uint16_t*)pData;
+
+	(*val)++;
+//	memcpy(m_frame, pMsg, size);
+	m_lastFrameSize = size;
+}
+
+static uint8_t comChannel = 0xFF;
 
 //*****************************************************************************
 ///
@@ -248,9 +277,17 @@ main(void)
 //    UARTprintf("Type 'help' for a list of commands\n");
 //    UARTprintf("> ");
 
-    SerialLink_Init(0, &serial);
-    SerialLink_Write(0, "Hello World !!!", 16);
-
+//    SerialLink_Init(0, &serial);
+//    SerialLink_Write(0, "Hello World !!!", 16);
+   comChannel = SerialLinkFrameProtocoleInit(SERIAL1,
+		   B115200,
+		   BIT_8,
+		   PARITY_NONE,
+		   STOP_BIT_1,
+		   (cbNotifyRx_t)FrameReceived,
+		   &nbReceivedFrame,
+		   (cbAllocMsg_t)AllocData,
+		   (cbFreeMsg_t)FreeData);
     //
     // Initialize the RGB LED. AppRainbow typically only called from interrupt
     // context. Safe to call here to force initial color update because
@@ -303,9 +340,9 @@ main(void)
 //        }
 //        UARTgets(g_cInput,sizeof(g_cInput));
 //        RGBProcess(g_cInput);
-    	SysCtlDelay(2 * (SysCtlClockGet() / 3));
+//    	SysCtlDelay(2 * (SysCtlClockGet() / 3));
 //    	UARTCharPut(UART1_BASE, car);
-    	UARTCharPut(UART0_BASE, 'A');
+//    	UARTCharPut(UART0_BASE, 'A');
 //    	SerialLink_Write(0, "Hello World !!!\n", 16);
     }
 }

@@ -87,7 +87,7 @@ typedef struct
 	SerialLinkParity_t parity;
 	SerialLinkStopBit_t stopBit;
 	SerialLinkReceiveCallback cbReception;
-	void* pReceptionArg;
+	void* pReceptionData;
 	SerialLinkTransmitCallback cbEndOfTransmition;
 	void* pEndOfTransmitionArg;
 	bool initOK;
