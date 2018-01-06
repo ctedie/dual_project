@@ -51,15 +51,25 @@ typedef struct rx_data
     void* pDataNotifyRX;
 
     cbAllocMsg_t cbAllocMsg;
+    cbFreeMsg_t cbFreeMsg;
 
 }rx_data_t;
 
+typedef struct
+{
+	bool isOpen;
+	uint8_t linkNumber;
+	rx_data_t rxMsg;
+//	tx_data_t txMsg;
+}channel_t;
 /////////////////////////////////////////////////////////////////////////////////
 // Private define
 /////////////////////////////////////////////////////////////////////////////////
 #define STX             0x02
 #define ETX             0x03
 #define DLE             0x10
+
+#define MAX_CHANNELS_NUMBER		4
 /////////////////////////////////////////////////////////////////////////////////
 // Private macro
 /////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +77,7 @@ typedef struct rx_data
 /////////////////////////////////////////////////////////////////////////////////
 // Private variables
 /////////////////////////////////////////////////////////////////////////////////
+channel_t m_channels[MAX_CHANNELS_NUMBER];
 
 /////////////////////////////////////////////////////////////////////////////////
 // Exported variables
@@ -81,6 +92,7 @@ static void waitStartDLE(rx_data_t *pDataRx, uint8_t car);
 static void waitSTX(rx_data_t *pDataRx, uint8_t car);
 static void waitDataWithoutDLE(rx_data_t *pDataRx, uint8_t car);
 static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car);
+
 /////////////////////////////////////////////////////////////////////////////////
 // Functions
 /////////////////////////////////////////////////////////////////////////////////
@@ -93,15 +105,65 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car);
 /// \return
 ///
 /////////////////////////////////////////////////////////////////////////////////
-bool SerialLinkFrameProtocoleInit(void)
+uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
+									SerialLinkSpeed_t baurate,
+									SerialLinkDataSize_t bitSize,
+									SerialLinkParity_t parity,
+									SerialLinkStopBit_t stopBit,
+									cbNotifyRx_t pcbNotifyRx,
+									void* pDataNotifyRx,
+									cbAllocMsg_t cbAllocMsg,
+									cbFreeMsg_t cbFreeMsg
+									)
 {
-	return false;
+	SerialLinkConfig_t linkConf;
+//	bool channelFound = false;
+	uint8_t channelNumber = 0xFF;
+	channel_t *pChannel = NULL;
+
+
+	//Find a free channels and open it
+	for (int i = 0; i < MAX_CHANNELS_NUMBER; ++i)
+	{
+		if(m_channels[i].isOpen == false)
+		{
+			m_channels[i].linkNumber = link;
+			channelNumber = i;
+			pChannel = &m_channels[i];
+			break;
+		}
+	}
+
+	// No free channel
+	if(channelNumber == 0xFF)
+	{
+		return channelNumber;
+	}
+
+
+	linkConf.baudrate = baurate;
+	linkConf.dataSize = bitSize;
+	linkConf.parity = parity;
+	linkConf.stopBit = stopBit;
+	linkConf.cbReception = charReceived;
+	linkConf.pReceptionArg = &pChannel->rxMsg;
+
+	pChannel->rxMsg.cbAllocMsg = cbAllocMsg;
+	pChannel->rxMsg.cbFreeMsg = cbFreeMsg;
+
+	if(SerialLink_Init(pChannel->linkNumber, &linkConf) != SERIAL_LINK_SUCCESS)
+	{
+		return false;
+	}
+
+	pChannel->isOpen = true;
+	return channelNumber;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 // Local Functions
 /////////////////////////////////////////////////////////////////////////////////
-///
+
 /////////////////////////////////////////////////////////////////////////////////
 /// \brief
 ///
@@ -147,6 +209,7 @@ static void waitSTX(rx_data_t *pDataRx, uint8_t car)
         if(pDataRx->pMsg == NULL) //No previous buffer so try to alloc one
         {
             //TODO Alloc pMsg
+        	pDataRx->cbAllocMsg(pDataRx->pMsg);
         }
 
         if(pDataRx->pMsg)
@@ -230,7 +293,7 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
         pDataRx->charTreatment = waitStartDLE;
 
         //Liberer la memoire msg
-        pDataRx->pMsg = NULL;
+        pDataRx->cbFreeMsg(pDataRx->pMsg);
     }
 
 }

@@ -41,10 +41,7 @@
 typedef struct
 {
 	uint32_t uartBase;
-	SerialLinkSpeed_t baudrate;
-	SerialLinkDataSize_t dataSize;
-	SerialLinkParity_t parity;
-	SerialLinkStopBit_t stopBit;
+
 	SerialLinkReceiveCallback cbReception;
 	void* pReceptionArg;
 	SerialLinkTransmitCallback cbTransmition;
@@ -119,29 +116,25 @@ static char receivedChar;
 /// \return
 ///
 /////////////////////////////////////////////////////////////////////////////////
-uint8_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *pConfig)
+SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *pConfig)
 {
-	uint8_t ret = 0;
+	SerialLinkReturn_t ret = SERIAL_LINK_SUCCESS;
 
 	uint32_t config = 0;
 
 	if(pConfig == NULL)
 	{
 		//Error
-		return 1;
+		return SERIAL_LINK_BAD_CONFIG;
 	}
 
-	m_SerialLinkList[link].dataSize = pConfig->dataSize;
-	m_SerialLinkList[link].parity = pConfig->parity;
-	m_SerialLinkList[link].stopBit = pConfig->stopBit;
-	m_SerialLinkList[link].baudrate = pConfig->baudrate;
 	m_SerialLinkList[link].cbReception = pConfig->cbReception;
 	m_SerialLinkList[link].pReceptionArg = pConfig->pReceptionArg;
 	m_SerialLinkList[link].cbTransmition = pConfig->cbEndOfTransmition;
 	m_SerialLinkList[link].pTransmitionArg = pConfig->pEndOfTransmitionArg;
 
 
-	switch (m_SerialLinkList[link].dataSize)
+	switch (pConfig->dataSize)
 	{
 		case BIT_7:
 			config |= UART_CONFIG_WLEN_7;
@@ -150,38 +143,35 @@ uint8_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *pConfig)
 			config |= UART_CONFIG_WLEN_8;
 			break;
 		default:
-			config |= UART_CONFIG_WLEN_8;
+			return SERIAL_LINK_BAD_CONFIG;
 			break;
 	}
 
-	switch (m_SerialLinkList[link].parity)
+	switch (pConfig->parity)
 	{
 		case PARITY_NONE:
 			config |= UART_CONFIG_PAR_NONE;
 			break;
 		default:
-			config |= UART_CONFIG_PAR_NONE;
-			break;
+			return SERIAL_LINK_BAD_CONFIG;
 	}
 
-	switch (m_SerialLinkList[link].stopBit)
+	switch (pConfig->stopBit)
 	{
 		case STOP_BIT_1:
 			config |= UART_CONFIG_STOP_ONE;
 			break;
 		default:
-			config |= UART_CONFIG_STOP_ONE;
-			break;
+			return SERIAL_LINK_BAD_CONFIG;
 	}
 
-	m_SerialLinkList[link].initOK = true;
 
 
     SysCtlPeripheralEnable(m_UARTPeriph[link]);
 
 	UARTConfigSetExpClk((uint32_t)m_SerialLinkList[link].uartBase,
 						(uint32_t)SysCtlClockGet(),
-						(uint32_t)m_SerialLinkList[link].baudrate,
+						(uint32_t)pConfig->baudrate,
 						(uint32_t)config
 						);
 
@@ -199,6 +189,7 @@ uint8_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *pConfig)
     UARTEnable(m_SerialLinkList[link].uartBase);
 //    m_SerialLinkList[uartNb].pReceptionArg =
 
+	m_SerialLinkList[link].initOK = true;
 
 	return ret;
 }
@@ -211,23 +202,23 @@ uint8_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *pConfig)
 /// \return
 ///
 /////////////////////////////////////////////////////////////////////////////////
-uint8_t SerialLink_Write(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
+SerialLinkReturn_t SerialLink_Write(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
 {
-	uint8_t ret = 0;
+	uint8_t ret = SERIAL_LINK_SUCCESS;
 	uint16_t i;
 
 
 	if(m_SerialLinkList[sLink].initOK == false)
 	{
 
-		ret = 1;
+		ret = SERIAL_LINK_NOT_INIT;
 	}
 
-	if(ret == 0)
+	if(ret == SERIAL_LINK_SUCCESS)
 	{
 		for (i = 0; i < size; ++i)
 		{
-
+			//TODO Non blocking
 			UARTCharPut(m_SerialLinkList[sLink].uartBase, pBuffer[i]);
 		}
 	}
@@ -243,19 +234,19 @@ uint8_t SerialLink_Write(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
 /// \return
 ///
 /////////////////////////////////////////////////////////////////////////////////
-uint8_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
+SerialLinkReturn_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16_t size)
 {
-	uint8_t ret = 0;
+	uint8_t ret = SERIAL_LINK_SUCCESS;
 	uint16_t i;
 
 
 	if(m_SerialLinkList[sLink].initOK == false)
 	{
 
-		ret = 1;
+		ret = SERIAL_LINK_NOT_INIT;
 	}
 
-	if(ret == 0)
+	if(ret == SERIAL_LINK_SUCCESS)
 	{
 		for (i = 0; i < size; ++i)
 		{

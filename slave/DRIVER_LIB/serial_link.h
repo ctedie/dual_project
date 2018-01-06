@@ -33,6 +33,14 @@ typedef void (*SerialLinkCallback)(uint8_t sLink, void* pArg);
 typedef void (*SerialLinkReceiveCallback)(void *pData, uint8_t car);
 typedef void (*SerialLinkTransmitCallback)(void *pData);
 
+typedef enum
+{
+	SERIAL_LINK_SUCCESS,
+	SERIAL_LINK_ERROR,
+	SERIAL_LINK_BAD_CONFIG,
+	SERIAL_LINK_NOT_INIT,
+	SERIAL_LINK_TX_ERROR
+}SerialLinkReturn_t;
 
 typedef enum
 {
