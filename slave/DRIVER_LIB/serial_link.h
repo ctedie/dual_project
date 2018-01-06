@@ -56,7 +56,7 @@ typedef enum
 	B9600 = 9600,
 	B19200 = 19200,
 	B115200 = 115200,
-	B4600800 = 4600800
+	B460800 = 460800
 }SerialLinkSpeed_t;
 
 typedef enum
