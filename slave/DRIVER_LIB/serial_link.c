@@ -45,8 +45,12 @@ typedef struct
 	SerialLinkReceiveCallback cbReception;
 	void* pReceptionData;
 	SerialLinkTransmitCallback cbTransmition;
-	void* pTransmitionArg;
+	void* pTransmitionData;
+	SerialLinkEndOfTransmitionCallback cbEndOfTransmition;
+	void* pEndOfTransmitionArg;
 	bool initOK;
+
+	uint32_t _intFlags;
 }SerialLink_t;
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +106,7 @@ static const pIntFunction m_IntFuncTable[] =
 
 static void generalIntHandler(uint32_t uartNb);
 void testCallback(uint8_t uartNb, void* pArg);
-
+static void disableTxInterrupt(uint32_t uartNb);
 
 /////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -121,6 +125,8 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 	SerialLinkReturn_t ret = SERIAL_LINK_SUCCESS;
 
 	uint32_t config = 0;
+	uint32_t intFlags = 0;
+	uint32_t fifoLevelsFlags = 0;
 
 	if(pConfig == NULL)
 	{
@@ -130,8 +136,10 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 
 	m_SerialLinkList[link].cbReception = pConfig->cbReception;
 	m_SerialLinkList[link].pReceptionData = pConfig->pReceptionData;
-	m_SerialLinkList[link].cbTransmition = pConfig->cbEndOfTransmition;
-	m_SerialLinkList[link].pTransmitionArg = pConfig->pEndOfTransmitionArg;
+	m_SerialLinkList[link].cbTransmition = pConfig->cbTransmition;
+	m_SerialLinkList[link].pTransmitionData = pConfig->pTransmitionData;
+	m_SerialLinkList[link].cbEndOfTransmition = pConfig->cbEndOfTransmition;
+	m_SerialLinkList[link].pEndOfTransmitionArg = pConfig->pEndOfTransmitionArg;
 
 
 	switch (pConfig->dataSize)
@@ -176,14 +184,20 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 
     if(m_SerialLinkList[link].cbReception != NULL)
     {
-    	UARTFIFOLevelSet(m_SerialLinkList[link].uartBase, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
-
-    	UARTIntDisable(m_SerialLinkList[link].uartBase, 0xFFFFFF);
-    	UARTIntRegister(m_SerialLinkList[link].uartBase, m_IntFuncTable[link]);
-    	UARTIntEnable(m_SerialLinkList[link].uartBase, UART_INT_RX | UART_INT_RT);
-    	UARTIntClear(m_SerialLinkList[link].uartBase, UART_INT_RX | UART_INT_RT);
-    	IntEnable(m_UARTInt[link]);
+    	m_SerialLinkList[link]._intFlags = (UART_INT_RX | UART_INT_RT);
     }
+
+
+
+
+	UARTFIFOLevelSet(m_SerialLinkList[link].uartBase, UART_FIFO_TX7_8, UART_FIFO_RX1_8);
+
+	UARTIntDisable(m_SerialLinkList[link].uartBase, 0xFFFFFF);
+	UARTIntRegister(m_SerialLinkList[link].uartBase, m_IntFuncTable[link]);
+	UARTIntEnable(m_SerialLinkList[link].uartBase, m_SerialLinkList[link]._intFlags);
+	UARTIntClear(m_SerialLinkList[link].uartBase, m_SerialLinkList[link]._intFlags);
+	IntEnable(m_UARTInt[link]);
+	UARTFIFOEnable(m_SerialLinkList[link].uartBase);
 
     UARTEnable(m_SerialLinkList[link].uartBase);
 //    m_SerialLinkList[uartNb].pReceptionArg =
@@ -191,6 +205,19 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 	m_SerialLinkList[link].initOK = true;
 
 	return ret;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+SerialLinkReturn_t SerialLink_StartTX(uint8_t sLink)
+{
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -282,6 +309,7 @@ static void generalIntHandler(uint32_t uartNb)
 {
 	uint32_t intStatus;
 	uint8_t car;
+	uint8_t txCar;
 
 	intStatus = UARTIntStatus(m_SerialLinkList[uartNb].uartBase, true);
 	UARTIntClear(m_SerialLinkList[uartNb].uartBase, intStatus);
@@ -301,7 +329,7 @@ static void generalIntHandler(uint32_t uartNb)
 	{
 		if(m_SerialLinkList[uartNb].cbTransmition != NULL)
 		{
-			m_SerialLinkList[uartNb].cbTransmition(m_SerialLinkList[uartNb].pTransmitionArg);
+			m_SerialLinkList[uartNb].cbTransmition(m_SerialLinkList[uartNb].pTransmitionData, &txCar);
 		}
 
 	}
@@ -314,12 +342,25 @@ static void generalIntHandler(uint32_t uartNb)
 
 }
 
+static void disableTxInterrupt(uint32_t uartNb)
+{
+	m_SerialLinkList[uartNb]._intFlags &= ~UART_INT_TX;
+	UARTIntDisable(m_SerialLinkList[uartNb].uartBase, m_SerialLinkList[uartNb]._intFlags);
+}
+
+static void ensableTxInterrupt(uint32_t uartNb)
+{
+	m_SerialLinkList[uartNb]._intFlags |= UART_INT_TX;
+	UARTIntDisable(m_SerialLinkList[uartNb].uartBase, m_SerialLinkList[uartNb]._intFlags);
+}
+
 static uint16_t cptReceivedChar;
 void testCallback(uint8_t uartNb, void* pArg)
 {
 	char* character = pArg;
 
 }
+
 
 ///
 /// \}

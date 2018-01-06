@@ -115,6 +115,7 @@ void RGBProcess(char* pcStr);
 void cbController(void);
 void cbSPI(void);
 void cbUARTCharReceived(void *pData, uint8_t car);
+bool cbUARTCharToTransmit(void* pData, uint8_t *car);
 
 uint32_t m_nbCharReceived = 0;
 SerialLinkConfig_t serial =
@@ -124,7 +125,7 @@ SerialLinkConfig_t serial =
 		.parity = PARITY_NONE,
 		.cbReception = cbUARTCharReceived,
 		.pReceptionData = &m_nbCharReceived,
-		.cbEndOfTransmition = NULL
+		.cbTransmition = cbUARTCharToTransmit
 };
 
 //*****************************************************************************
@@ -278,7 +279,7 @@ main(void)
 //    UARTprintf("> ");
 
 //    SerialLink_Init(0, &serial);
-//    SerialLink_Write(0, "Hello World !!!", 16);
+    SerialLink_Write(0, "Hello World !!!", 16);
    comChannel = SerialLinkFrameProtocoleInit(SERIAL1,
 		   B115200,
 		   BIT_8,
@@ -343,7 +344,7 @@ main(void)
 //    	SysCtlDelay(2 * (SysCtlClockGet() / 3));
 //    	UARTCharPut(UART1_BASE, car);
 //    	UARTCharPut(UART0_BASE, 'A');
-//    	SerialLink_Write(0, "Hello World !!!\n", 16);
+//    	SerialLink_Write(0, "A", 1);
     }
 }
 
@@ -394,4 +395,9 @@ void cbUARTCharReceived(void *pData, uint8_t car)
 	uint32_t *number = (uint32_t*)pData;
 	testReceivedChar = car;
 	(*number)++;
+}
+
+bool cbUARTCharToTransmit(void* pData, uint8_t *car)
+{
+
 }
