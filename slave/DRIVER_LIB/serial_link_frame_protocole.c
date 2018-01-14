@@ -55,12 +55,23 @@ typedef struct rx_data
 
 }rx_data_t;
 
+typedef struct tx_data
+{
+	//Fifo;
+	cbFreeMsg_t cbFreeMsg;
+	uint8_t *pMsg;
+	uint8_t *pCurrCar;
+	uint16_t size;
+
+	bool (*cbNextState)(struct tx_data *pDataTx, uint8_t *pCar);
+}tx_data_t;
+
 typedef struct
 {
 	bool isOpen;
 	uint8_t linkNumber;
 	rx_data_t rxMsg;
-//	tx_data_t txMsg;
+	tx_data_t txMsg;
 }channel_t;
 /////////////////////////////////////////////////////////////////////////////////
 // Private define
@@ -92,6 +103,17 @@ static void waitStartDLE(rx_data_t *pDataRx, uint8_t car);
 static void waitSTX(rx_data_t *pDataRx, uint8_t car);
 static void waitDataWithoutDLE(rx_data_t *pDataRx, uint8_t car);
 static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car);
+
+static bool sendChar(void* pData, uint8_t *pCar);
+static bool SendDLEStart(tx_data_t *pDataTx, uint8_t *pCar);
+static bool SendSTX(tx_data_t *pDataTx, uint8_t *pCar);
+static bool SendData(tx_data_t *pDataTx, uint8_t *pCar);
+static bool SendDataDLE(tx_data_t *pDataTx, uint8_t *pCar);
+static bool SendDLEEnd(tx_data_t *pDataTx, uint8_t *pCar);
+static bool SendETX(tx_data_t *pDataTx, uint8_t *pCar);
+static bool EndTX(tx_data_t *pDataTx, uint8_t *pCar);
+
+static bool buildmessage(void *pData, uint8_t *pMsg, uint16_t maxSize);
 
 /////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -152,6 +174,8 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 	linkConf.stopBit = stopBit;
 	linkConf.cbReception = charReceived;
 	linkConf.pReceptionData = &pChannel->rxMsg;
+	linkConf.cbTransmission = sendChar;
+	linkConf.pTransmitionData = &pChannel->txMsg;
 
 	if(SerialLink_Init(pChannel->linkNumber, &linkConf) != SERIAL_LINK_SUCCESS)
 	{
@@ -161,6 +185,30 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 	pChannel->isOpen = true;
 	pChannel->rxMsg.charTreatment = waitStartDLE;
 	return channelNumber;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+void SerialLinkFrameProtocole_Send(uint8_t channel, uint8_t *pMsg, uint16_t size)
+{
+	channel_t *pChannel = &m_channels[channel];
+
+	if(!pChannel->isOpen)
+	{
+		return;
+	}
+
+	pChannel->txMsg.pMsg = pMsg;
+	pChannel->txMsg.size = size;
+	pChannel->txMsg.cbNextState = SendDLEStart;
+
+	SerialLink_StartTX(pChannel->linkNumber);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -180,6 +228,7 @@ static void charReceived(void *pData, uint8_t car)
     rx_data_t* pDataRx = (rx_data_t*)pData;
     pDataRx->charTreatment(pDataRx, car);
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////
 /// \brief
@@ -304,6 +353,176 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool sendChar(void* pData, uint8_t *pCar)
+{
+	tx_data_t *pDataTx = (tx_data_t*) pData;
+	return ((tx_data_t*)pDataTx->cbNextState((tx_data_t*)pDataTx, pCar));
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool SendDLEStart(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	pDataTx->pCurrCar = pDataTx->pMsg;
+
+	*pCar = DLE;
+	pDataTx->cbNextState = SendSTX;
+
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool SendSTX(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	*pCar = STX;
+	pDataTx->cbNextState = SendData;
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool SendData(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	*pCar = *pDataTx->pCurrCar;
+	pDataTx->pCurrCar++;
+	pDataTx->size--;
+
+	if(*pCar == DLE)
+	{
+		//It is a DLE so double it
+		pDataTx->cbNextState = SendDataDLE;
+	}
+	else
+	{
+		if(pDataTx->size == 0)
+		{
+			//No more character to send. End the frame
+			pDataTx->cbNextState = SendDLEEnd;
+		}
+	}
+
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool SendDataDLE(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	*pCar = DLE;
+
+	if(pDataTx->size == 0)
+	{
+		//No more characters to send
+		pDataTx->cbNextState = SendDLEEnd;
+	}
+	else
+	{
+		pDataTx->cbNextState = SendData;
+	}
+
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool SendDLEEnd(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	*pCar = DLE;
+	pDataTx->cbNextState = SendETX;
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool SendETX(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	*pCar = ETX;
+
+	pDataTx->cbFreeMsg(pDataTx->pMsg);
+
+	//End of frame
+	pDataTx->cbNextState = EndTX;
+
+	return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool EndTX(tx_data_t *pDataTx, uint8_t *pCar)
+{
+	return false;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+/// \brief
+///
+/// \param
+///
+/// \return
+///
+/////////////////////////////////////////////////////////////////////////////////
+static bool buildmessage(void *pData, uint8_t *pMsg, uint16_t maxSize)
+{
+	bool ret = true;
+	tx_data_t *pDataTx = (tx_data_t *)pData;
+
+
+	return ret;
+}
 ///
 /// \}
 ///

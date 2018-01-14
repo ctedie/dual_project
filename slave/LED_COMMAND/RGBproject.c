@@ -125,7 +125,7 @@ SerialLinkConfig_t serial =
 		.parity = PARITY_NONE,
 		.cbReception = cbUARTCharReceived,
 		.pReceptionData = &m_nbCharReceived,
-		.cbTransmition = cbUARTCharToTransmit
+		.cbTransmission = cbUARTCharToTransmit
 };
 
 //*****************************************************************************
@@ -169,6 +169,7 @@ SysTickIntHandler(void)
 }
 
 static uint8_t m_frame[1024];
+static uint8_t txFrame[10] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
 
 static uint8_t* AllocData(void)
 {
@@ -205,6 +206,7 @@ static uint8_t comChannel = 0xFF;
 ///
 //*****************************************************************************
 static uint8_t car = 0xAA;
+static bool dbgCtedi = false;
 int
 main(void)
 {
@@ -345,6 +347,11 @@ main(void)
 //    	UARTCharPut(UART1_BASE, car);
 //    	UARTCharPut(UART0_BASE, 'A');
 //    	SerialLink_Write(0, "A", 1);
+    	if(dbgCtedi)
+    	{
+    		dbgCtedi = false;
+    		SerialLinkFrameProtocole_Send(comChannel, txFrame, 10);
+    	}
     }
 }
 

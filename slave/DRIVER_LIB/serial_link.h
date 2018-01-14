@@ -40,7 +40,8 @@ typedef enum
 	SERIAL_LINK_ERROR,
 	SERIAL_LINK_BAD_CONFIG,
 	SERIAL_LINK_NOT_INIT,
-	SERIAL_LINK_TX_ERROR
+	SERIAL_LINK_TX_ERROR,
+	SERIAL_LINK_BAD_ID
 }SerialLinkReturn_t;
 
 typedef enum
@@ -89,7 +90,7 @@ typedef struct
 	SerialLinkStopBit_t stopBit;
 	SerialLinkReceiveCallback cbReception;
 	void* pReceptionData;
-	SerialLinkTransmitCallback cbTransmition;
+	SerialLinkTransmitCallback cbTransmission;
 	void* pTransmitionData;
 	SerialLinkEndOfTransmitionCallback cbEndOfTransmition;
 	void* pEndOfTransmitionArg;
@@ -111,6 +112,7 @@ typedef struct
 uint8_t SerialLink_Init(uint8_t sLink, SerialLinkConfig_t *pConfig);
 uint8_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16_t size);
 uint8_t SerialLink_Write(uint8_t sLink, uint8_t *pBuffer, uint16_t size);
+SerialLinkReturn_t SerialLink_StartTX(uint8_t sLink);
 
 void serialLinkIntHandler0(void);
 void serialLinkIntHandler1(void);

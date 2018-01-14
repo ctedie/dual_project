@@ -54,6 +54,7 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 									cbFreeMsg_t cbFreeMsg
 									);
 
+void SerialLinkFrameProtocole_Send(uint8_t channel, uint8_t *pMsg, uint16_t size);
 
 #ifdef __cplusplus
 }

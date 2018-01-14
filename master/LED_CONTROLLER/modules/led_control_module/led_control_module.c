@@ -167,7 +167,7 @@ static void UARTGpioCallback(uint32_t arg)
 	uint8_t car;
 	//TODO
 	status = UARTIntStatus(UART7_BASE, true);
-	car = (uint8_t)UARTCharGet(UART7_BASE);
+	car = (uint8_t)UARTCharGetNonBlocking(UART7_BASE);
 	UARTIntClear(UART7_BASE, status);
 	Hwi_clearInterrupt(INT_UART7_TM4C129);
 	nbInt++;
