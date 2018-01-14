@@ -169,7 +169,7 @@ SysTickIntHandler(void)
 }
 
 static uint8_t m_frame[1024];
-static uint8_t txFrame[10] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
+static uint8_t txFrame[30] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
 
 static uint8_t* AllocData(void)
 {
@@ -281,7 +281,7 @@ main(void)
 //    UARTprintf("> ");
 
 //    SerialLink_Init(0, &serial);
-    SerialLink_Write(0, "Hello World !!!", 16);
+//    SerialLink_Write(0, "Hello World !!!", 16);
    comChannel = SerialLinkFrameProtocoleInit(SERIAL1,
 		   B115200,
 		   BIT_8,
@@ -350,7 +350,7 @@ main(void)
     	if(dbgCtedi)
     	{
     		dbgCtedi = false;
-    		SerialLinkFrameProtocole_Send(comChannel, txFrame, 10);
+    		SerialLinkFrameProtocole_Send(comChannel, txFrame, 30);
     	}
     }
 }

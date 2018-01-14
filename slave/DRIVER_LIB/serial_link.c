@@ -193,8 +193,8 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 
 
 
-	UARTFIFOLevelSet(m_SerialLinkList[link].uartBase, UART_FIFO_TX7_8, UART_FIFO_RX1_8);
-//	UARTTxIntModeSet(m_SerialLinkList[link].uartBase, UART_TXINT_MODE_EOT);
+	UARTFIFOLevelSet(m_SerialLinkList[link].uartBase, UART_FIFO_TX1_8, UART_FIFO_RX1_8);
+	UARTTxIntModeSet(m_SerialLinkList[link].uartBase, UART_TXINT_MODE_EOT);
 
 	UARTIntDisable(m_SerialLinkList[link].uartBase, 0xFFFFFF);
 	UARTIntRegister(m_SerialLinkList[link].uartBase, m_IntFuncTable[link]);
@@ -233,14 +233,21 @@ SerialLinkReturn_t SerialLink_StartTX(uint8_t sLink)
 		return SERIAL_LINK_NOT_INIT;
 	}
 
-
-	//Send the first character
-	if(m_SerialLinkList[sLink].cbTransmission(m_SerialLinkList[sLink].pTransmitionData, &car))
+	while(UARTSpaceAvail(m_SerialLinkList[sLink].uartBase))
 	{
-		enableTxInterrupt(sLink);
-		UARTCharPutNonBlocking(m_SerialLinkList[sLink].uartBase, car);
+		//Send the first characters
+		if(m_SerialLinkList[sLink].cbTransmission(m_SerialLinkList[sLink].pTransmitionData, &car))
+		{
+			UARTCharPutNonBlocking(m_SerialLinkList[sLink].uartBase, car);
 
+		}
+		else
+		{
+			break;
+		}
 	}
+
+	enableTxInterrupt(sLink);
 	return SERIAL_LINK_SUCCESS;
 
 }

@@ -162,12 +162,16 @@ uint8_t SerialLinkFrameProtocoleInit(SerialLinkNumber_t link,
 		return channelNumber;
 	}
 
+	pChannel->txMsg.cbFreeMsg = cbFreeMsg;
+	pChannel->txMsg.cbNextState = EndTX;
+	pChannel->txMsg.pMsg = NULL;
 
 	pChannel->rxMsg.cbAllocMsg = cbAllocMsg;
 	pChannel->rxMsg.cbFreeMsg = cbFreeMsg;
 	pChannel->rxMsg.cbNotifyRx = cbNotifyRx;
 	pChannel->rxMsg.pDataNotifyRX = pDataNotifyRx;
 
+//	pChannel
 	linkConf.baudrate = baurate;
 	linkConf.dataSize = bitSize;
 	linkConf.parity = parity;
