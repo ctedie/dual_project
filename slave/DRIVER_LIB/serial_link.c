@@ -361,10 +361,20 @@ static void generalIntHandler(uint32_t uartNb)
 	{
 		if(m_SerialLinkList[uartNb].cbTransmission != NULL)
 		{
-			if(m_SerialLinkList[uartNb].cbTransmission(m_SerialLinkList[uartNb].pTransmitionData, &txCar))
+			while(UARTSpaceAvail(m_SerialLinkList[uartNb].uartBase))
 			{
-				UARTCharPut(m_SerialLinkList[uartNb].uartBase, txCar);
+				//Send the first characters
+				if(m_SerialLinkList[uartNb].cbTransmission(m_SerialLinkList[uartNb].pTransmitionData, &car))
+				{
+					UARTCharPutNonBlocking(m_SerialLinkList[uartNb].uartBase, car);
+
+				}
+				else
+				{
+					break;
+				}
 			}
+
 		}
 
 	}

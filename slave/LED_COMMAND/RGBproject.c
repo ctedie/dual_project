@@ -55,34 +55,11 @@
 #include "serial_link.h"
 #include "serial_link_frame_protocol.h"
 
-//*****************************************************************************
-//
-//! \addtogroup example_list
-//! <h1>EK-LM4F120XL Quickstart Application (qs-rgb)</h1>
-//!
-//! A demonstration of the Stellaris LaunchPad (EK-LM4F120XL) capabilities.
-//!
-//! Press and/or hold the left button traverse toward the red end of the
-//! ROYGBIV color spectrum.  Press and/or hold the right button to traverse
-//! toward the violet end of the ROYGBIV color spectrum.
-//!
-//! Leave idle for 5 seconds to see a automatically changing color display
-//!
-//! Press and hold both left and right buttons for 3 seconds to enter
-//! hibernation.  During hibernation last color on screen will blink on the
-//! LED for 0.5 seconds every 3 seconds.
-//!
-//! Command line UART protocol can also control the system.
-//!
-//! Command 'help' to generate list of commands and helpful information.
-//! Command 'hib' will place the device into hibernation mode.
-//! Command 'rand' will initiate the pseudo-random sequence.
-//! Command 'intensity' followed by a number between 0.0 and 1.0 will scale
-//! the brightness of the LED by that factor.
-//! Command 'rgb' followed by a six character hex value will set the color. For
-//! example 'rgb FF0000' will produce a red color.
-//
-//*****************************************************************************
+
+/******************************************************************************
+ * MACRO DEFINITIN
+ *****************************************************************************/
+#define TX_FRAME_SIZE	1000
 
 
 //*****************************************************************************
@@ -167,9 +144,8 @@ SysTickIntHandler(void)
 
 
 }
-
 static uint8_t m_frame[1024];
-static uint8_t txFrame[30] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
+static uint8_t m_pTxFrame[TX_FRAME_SIZE];
 
 static uint8_t* AllocData(void)
 {
@@ -224,9 +200,6 @@ main(void)
 
 
 
-
-
-
     //
     // Set the system clock to run at 40Mhz off PLL with external crystal as
     // reference.
@@ -246,20 +219,6 @@ main(void)
     m_cpuClock = SysCtlClockGet();
 
     //------------ SPI Test -----------------
-//
-//    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-//    GPIOPinConfigure(GPIO_PB5_SSI2FSS);
-//    GPIOPinConfigure(GPIO_PB4_SSI2CLK);
-//    GPIOPinConfigure(GPIO_PB7_SSI2TX);
-//    GPIOPinConfigure(GPIO_PB6_SSI2RX);
-//    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
-//
-//    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI2);
-//    SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_SLAVE, 10000, 16);
-//
-//    SSIIntRegister(SSI2_BASE, cbSPI);
-//    SSIIntEnable(SSI2_BASE, NULL);
-    //------------ End SPI Test -----------------
 
 //------------------ UART Com Test ---------------------
    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
@@ -313,8 +272,10 @@ main(void)
 //    SysTickEnable();
 //    SysTickIntEnable();
     IntMasterEnable();
-
-
+    int i;
+    for (i = 0; i < TX_FRAME_SIZE; ++i) {
+		m_pTxFrame[i] = i;
+	}
 
     //
     // spin forever and wait for carriage returns or state changes.
@@ -350,7 +311,7 @@ main(void)
     	if(dbgCtedi)
     	{
     		dbgCtedi = false;
-    		SerialLinkFrameProtocole_Send(comChannel, txFrame, 30);
+    		SerialLinkFrameProtocole_Send(comChannel, m_pTxFrame, TX_FRAME_SIZE);
     	}
     }
 }
