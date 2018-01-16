@@ -90,7 +90,6 @@ __error__(char *pcFilename, unsigned long ulLine)
 
 void RGBProcess(char* pcStr);
 void cbController(void);
-void cbSPI(void);
 void cbUARTCharReceived(void *pData, uint8_t car);
 bool cbUARTCharToTransmit(void* pData, uint8_t *car);
 
@@ -114,8 +113,7 @@ SerialLinkConfig_t serial =
 // RGB color changes.
 //
 //*****************************************************************************
-void
-SysTickIntHandler(void)
+static void SysTickIntHandler(void)
 {
 	unsigned long ulColors[3];
 	static unsigned char index2=0;
@@ -271,6 +269,7 @@ main(void)
 //    SysTickPeriodSet(SysCtlClockGet());
 //    SysTickEnable();
 //    SysTickIntEnable();
+//    SysTickIntRegister(SysTickIntHandler);
     IntMasterEnable();
     int i;
     for (i = 0; i < TX_FRAME_SIZE; ++i) {
@@ -291,18 +290,6 @@ main(void)
 //    	ulStatus[1] = (ulStatus[1]+3)%65536;
 //    	ulStatus[2] = (ulStatus[2]+6)%65536;
 
-        //
-        // Peek to see if a full command is ready for processing
-        //
-//        while(UARTPeek('\r') == -1)
-//        {
-//            //
-//            // millisecond delay.  A SysCtlSleep() here would also be OK.
-//            //
-//            SysCtlDelay(SysCtlClockGet() / (1000 / 3));
-//
-//        }
-//        UARTgets(g_cInput,sizeof(g_cInput));
 //        RGBProcess(g_cInput);
 //    	SysCtlDelay(2 * (SysCtlClockGet() / 3));
 //    	UARTCharPut(UART1_BASE, car);
@@ -351,11 +338,6 @@ void cbController(void)
 	GPIOPinIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
 }
 
-void cbSPI(void)
-{
-
-}
-
 //FIXME for test. Must not be here
 static uint8_t testReceivedChar;
 void cbUARTCharReceived(void *pData, uint8_t car)
@@ -365,7 +347,3 @@ void cbUARTCharReceived(void *pData, uint8_t car)
 	(*number)++;
 }
 
-bool cbUARTCharToTransmit(void* pData, uint8_t *car)
-{
-
-}
