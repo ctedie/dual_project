@@ -53,6 +53,9 @@ typedef struct rx_data
     cbAllocMsg_t cbAllocMsg;
     cbFreeMsg_t cbFreeMsg;
 
+    uint32_t cptFrameReceived;
+    uint32_t cptFrameAborted;
+
 }rx_data_t;
 
 typedef struct tx_data
@@ -64,6 +67,8 @@ typedef struct tx_data
 	uint16_t size;
 
 	bool (*cbNextState)(struct tx_data *pDataTx, uint8_t *pCar);
+	uint32_t cptFrameSent;
+	uint32_t cptFrameError;
 }tx_data_t;
 
 typedef struct
@@ -493,6 +498,7 @@ static bool SendETX(tx_data_t *pDataTx, uint8_t *pCar)
 
 	pDataTx->pMsg = NULL;
 	//End of frame
+	pDataTx->cptFrameSent++;
 	pDataTx->cbNextState = EndTX;
 
 	return true;
