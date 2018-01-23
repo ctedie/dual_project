@@ -65,7 +65,7 @@
 #include "led_control_module.h"
 #include "serial_link.h"
 #include "serial_link_frame_protocol.h"
-
+#include "test_link.h"
 
 
 #define TCPPACKETSIZE 1100
@@ -260,16 +260,7 @@ int main(void)
 
 
     LED_CONTROL_Init();
-    comChannel = SerialLinkFrameProtocoleInit(SERIAL1,
- 		   B115200,
- 		   BIT_8,
- 		   PARITY_NONE,
- 		   STOP_BIT_1,
- 		   (cbNotifyRx_t)FrameReceived,
- 		   &nbReceivedFrame,
- 		   (cbAllocMsg_t)AllocData,
- 		   (cbFreeMsg_t)FreeData);
-
+    Test_link_init();
 //    FileSystem_Init();
 //    MNT_init();
     System_printf("Starting the TCP Echo example\nSystem provider is set to "

@@ -19,7 +19,7 @@
 struct message
 {
 	bool isUsed;
-	uint8_t msg[500];
+	uint8_t msg[50];
 };
 
 struct message m_arrMsg[NB_MAX_MSG] = {{.isUsed = false},{.isUsed = false},{.isUsed = false}};
@@ -42,6 +42,12 @@ bool Test_link_init(void)
 												   Alloc,
 												   Free
 												   );
+
+	uint8_t *pMsg;
+	pMsg = Alloc();
+	pMsg[12] = 0xCE;
+	pMsg[13] = 0xD0;
+
 	return true;
 }
 
