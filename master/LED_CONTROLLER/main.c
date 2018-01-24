@@ -259,7 +259,7 @@ int main(void)
     Board_initUART();
 
 
-    LED_CONTROL_Init();
+//    LED_CONTROL_Init();
     Test_link_init();
 //    FileSystem_Init();
 //    MNT_init();

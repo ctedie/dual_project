@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "system.h"
 
 #include "inc/hw_ints.h"
 #include "inc/hw_types.h"
@@ -76,8 +77,8 @@ SerialLink_t m_SerialLinkList[NB_SERIAL] =
 		}
 };
 
-
-
+Hwi_Handle uart0HwiHandle;
+static Hwi_Struct hwiStruct;
 
 static const uint32_t m_UARTPeriph[NB_SERIAL] =
 {
@@ -177,8 +178,9 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 
     SysCtlPeripheralEnable(m_UARTPeriph[link]);
 
+    uint32_t clk = SysCtlClockGet();
 	UARTConfigSetExpClk((uint32_t)m_SerialLinkList[link].uartBase,
-						(uint32_t)SysCtlClockGet(),
+						(uint32_t)CPU_CLOCK,
 						(uint32_t)pConfig->baudrate,
 						(uint32_t)config
 						);
@@ -197,10 +199,21 @@ SerialLinkReturn_t SerialLink_Init(SerialLinkNumber_t link, SerialLinkConfig_t *
 	UARTTxIntModeSet(m_SerialLinkList[link].uartBase, UART_TXINT_MODE_EOT);
 
 	UARTIntDisable(m_SerialLinkList[link].uartBase, 0xFFFFFF);
+#ifdef TI_RTOS
+//	uart0HwiHandle = Hwi_create(m_UARTInt[link], (Hwi_FuncPtr)m_IntFuncTable[link], NULL, NULL);
+	Hwi_construct(&hwiStruct, 21, (Hwi_FuncPtr)m_IntFuncTable[link], NULL, NULL);
+//	if(uart0HwiHandle == NULL)
+//	{
+//		return SERIAL_LINK_ERROR;
+//	}
+//    Hwi_enableInterrupt(m_UARTInt[link]);
+//    Hwi_enable();
+#else
 	UARTIntRegister(m_SerialLinkList[link].uartBase, m_IntFuncTable[link]);
-	UARTIntEnable(m_SerialLinkList[link].uartBase, m_SerialLinkList[link]._intFlags);
 	UARTIntClear(m_SerialLinkList[link].uartBase, m_SerialLinkList[link]._intFlags);
 	IntEnable(m_UARTInt[link]);
+#endif
+	UARTIntEnable(m_SerialLinkList[link].uartBase, m_SerialLinkList[link]._intFlags);
 	UARTFIFOEnable(m_SerialLinkList[link].uartBase);
 
     UARTEnable(m_SerialLinkList[link].uartBase);
@@ -323,6 +336,7 @@ SerialLinkReturn_t SerialLink_Read(uint8_t sLink, uint8_t *pBuffer, const uint16
 
 void serialLinkIntHandler0(void)
 {
+	Hwi_clearInterrupt(m_UARTInt[SERIAL1]);
 	generalIntHandler(SERIAL1);
 }
 
