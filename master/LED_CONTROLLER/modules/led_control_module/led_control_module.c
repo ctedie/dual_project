@@ -52,7 +52,7 @@ typedef struct
 /////////////////////////////////////////////////////////////////////////////////
 // Private variables
 /////////////////////////////////////////////////////////////////////////////////
-
+static uint8_t m_channelNumber = NULL;
 static tbuffMsg m_arrMsg[MAX_NB_MSG];
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +62,9 @@ static tbuffMsg m_arrMsg[MAX_NB_MSG];
 /////////////////////////////////////////////////////////////////////////////////
 // Private function prototypes
 /////////////////////////////////////////////////////////////////////////////////
+static uint8_t* AllocMsg(void);
+static void FreeMsg(void *pMsg);
+static void process_data(void* pData, uint8_t *pMsg, uint16_t size);
 
 /////////////////////////////////////////////////////////////////////////////////
 // Functions
@@ -78,8 +81,9 @@ static tbuffMsg m_arrMsg[MAX_NB_MSG];
 bool LED_CONTROL_Init(void)
 {
 
+	uint8_t i;
 	//Init the buffer array
-	for (int i = 0; i < MAX_NB_MSG; ++i)
+	for (i = 0; i < MAX_NB_MSG; ++i)
 	{
 		m_arrMsg[i].isUsed = false;
 	}
@@ -89,10 +93,10 @@ bool LED_CONTROL_Init(void)
 												   BIT_8,
 												   PARITY_NONE,
 												   STOP_BIT_1,
-												   Reception_complete,
+												   process_data,
 												   &m_channelNumber,
-												   Alloc,
-												   Free
+												   AllocMsg,
+												   FreeMsg
 												   );
 
 
@@ -131,12 +135,12 @@ static uint8_t* AllocMsg(void)
 {
 	uint8_t i;
 
-	for (i = 0; i < NB_MAX_MSG; ++i)
+	for (i = 0; i < MAX_NB_MSG; ++i)
 	{
 		if(m_arrMsg[i].isUsed == false)
 		{
 			m_arrMsg[i].isUsed = true;
-			return m_arrMsg[i].msg;
+			return &(m_arrMsg[i].msg);
 		}
 
 	}
@@ -155,9 +159,9 @@ static void FreeMsg(void *pMsg)
 {
 	uint8_t i;
 
-	for (i = 0; i < NB_MAX_MSG; ++i)
+	for (i = 0; i < MAX_NB_MSG; ++i)
 	{
-		if(m_arrMsg[i].msg == pMsg)
+		if(&m_arrMsg[i].msg == pMsg)
 		{
 			m_arrMsg[i].isUsed = false;
 		}
@@ -174,12 +178,29 @@ static void FreeMsg(void *pMsg)
 /////////////////////////////////////////////////////////////////////////////////
 static void process_data(void* pData, uint8_t *pMsg, uint16_t size)
 {
+	tExchangeMsg* message = (tExchangeMsg*)pMsg;
 
-	status = UARTIntStatus(UART7_BASE, true);
-	car = (uint8_t)UARTCharGetNonBlocking(UART7_BASE);
-	UARTIntClear(UART7_BASE, status);
-	Hwi_clearInterrupt(INT_UART7_TM4C129);
-	nbInt++;
+	switch (message->header.commandID)
+	{
+		case COMMAND_SET_RGB_CONTROL:
+
+			break;
+		case COMAND_GET_RGB_CONTROL:
+
+			break;
+		case COMMAND_GET_STATUS:
+
+			break;
+		case COMMAND_GET_DATE_TIME:
+
+			break;
+		case COMMAND_UPDATE_DATE_TIME:
+
+			break;
+		default:
+			break;
+	}
+
 }
 
 ///

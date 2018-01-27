@@ -51,12 +51,11 @@ PACK(typedef union
     tExchangeHeader header;
     PACK(struct
     {
-        tExchangeHeader h;
         uint8_t data[MAX_DATA_SIZE];
     }) req;
     PACK(struct
     {
-        tExchangeHeader h;
+    	uint8_t status;
         uint8_t data[MAX_DATA_SIZE];
     }) ans;
 }) tExchangeMsg;

@@ -63,22 +63,11 @@
 #include "mntFrame.h"
 #include "web_server.h"
 #include "led_control_module.h"
-#include "serial_link.h"
-#include "serial_link_frame_protocol.h"
-#include "test_link.h"
 
 
 #define TCPPACKETSIZE 1100
 #define NUMTCPWORKERS 3
-#define TX_FRAME_SIZE	1000
 
-
-
-static uint8_t m_frame[1024];
-static uint8_t m_pTxFrame[TX_FRAME_SIZE];
-uint16_t m_lastFrameSize = 0;
-
-uint32_t m_nbCharReceived = 0;
 
 /*
  *  ======== tcpWorker ========
@@ -96,7 +85,7 @@ Void tcpWorker(UArg arg0, UArg arg1)
 
     while ((bytesRcvd = recv(clientfd, buffer, TCPPACKETSIZE, 0)) > 0)
     {
-    	MNTProcess(buffer);
+    	MNTProcess((uint8_t*)buffer);
         bytesSent = send(clientfd, buffer, bytesRcvd, 0);
         if (bytesSent < 0 || bytesSent != bytesRcvd) {
             System_printf("Error: send failed.\n");
@@ -220,37 +209,12 @@ shutdown:
     }
 }
 
-static uint8_t* AllocData(void)
-{
-	return m_frame;
-//	pData = malloc(1024);
-}
-
-static void FreeData(uint8_t *pData)
-{
-//	free(pData);
-	pData = NULL;
-}
-
-
-
-static uint16_t nbReceivedFrame = 0;
-
-static void FrameReceived(void* pData, uint8_t *pMsg, uint16_t size)
-{
-	uint16_t *val = (uint16_t*)pData;
-
-	(*val)++;
-//	memcpy(m_frame, pMsg, size);
-	m_lastFrameSize = size;
-}
 
 /*
  *  ======== main ========
  */
 int main(void)
 {
-	static uint8_t comChannel = 0xFF;
     /* Call board init functions */
     Board_initGeneral();
     Board_initGPIO();
@@ -260,7 +224,6 @@ int main(void)
 
 
 //    LED_CONTROL_Init();
-    Test_link_init();
 //    FileSystem_Init();
 //    MNT_init();
     System_printf("Starting the TCP Echo example\nSystem provider is set to "
