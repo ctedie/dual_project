@@ -175,6 +175,11 @@ static void FreeMsg(void *pMsg)
 static void process_data(void* pData, uint8_t *pMsg, uint16_t size)
 {
 
+	status = UARTIntStatus(UART7_BASE, true);
+	car = (uint8_t)UARTCharGetNonBlocking(UART7_BASE);
+	UARTIntClear(UART7_BASE, status);
+	Hwi_clearInterrupt(INT_UART7_TM4C129);
+	nbInt++;
 }
 
 ///

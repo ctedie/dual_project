@@ -26,6 +26,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -52,35 +53,13 @@
 
 #include "RGBProject.h"
 #include "serial_link.h"
+#include "serial_link_frame_protocol.h"
 
-//*****************************************************************************
-//
-//! \addtogroup example_list
-//! <h1>EK-LM4F120XL Quickstart Application (qs-rgb)</h1>
-//!
-//! A demonstration of the Stellaris LaunchPad (EK-LM4F120XL) capabilities.
-//!
-//! Press and/or hold the left button traverse toward the red end of the
-//! ROYGBIV color spectrum.  Press and/or hold the right button to traverse
-//! toward the violet end of the ROYGBIV color spectrum.
-//!
-//! Leave idle for 5 seconds to see a automatically changing color display
-//!
-//! Press and hold both left and right buttons for 3 seconds to enter
-//! hibernation.  During hibernation last color on screen will blink on the
-//! LED for 0.5 seconds every 3 seconds.
-//!
-//! Command line UART protocol can also control the system.
-//!
-//! Command 'help' to generate list of commands and helpful information.
-//! Command 'hib' will place the device into hibernation mode.
-//! Command 'rand' will initiate the pseudo-random sequence.
-//! Command 'intensity' followed by a number between 0.0 and 1.0 will scale
-//! the brightness of the LED by that factor.
-//! Command 'rgb' followed by a six character hex value will set the color. For
-//! example 'rgb FF0000' will produce a red color.
-//
-//*****************************************************************************
+
+/******************************************************************************
+ * MACRO DEFINITIN
+ *****************************************************************************/
+#define TX_FRAME_SIZE	1000
 
 
 //*****************************************************************************
@@ -94,6 +73,8 @@ static volatile unsigned long ulHibModeEntryCount;
 static char g_cInput[128];
 
 static unsigned long index = 0;
+
+uint32_t m_cpuClock=0;
 //*****************************************************************************
 //
 // The error routine that is called if the driver library encounters an error.
@@ -109,7 +90,20 @@ __error__(char *pcFilename, unsigned long ulLine)
 
 void RGBProcess(char* pcStr);
 void cbController(void);
-void cbSPI(void);
+void cbUARTCharReceived(void *pData, uint8_t car);
+bool cbUARTCharToTransmit(void* pData, uint8_t *car);
+
+uint32_t m_nbCharReceived = 0;
+SerialLinkConfig_t serial =
+{
+		.baudrate = B115200,
+		.dataSize = BIT_8,
+		.parity = PARITY_NONE,
+		.cbReception = cbUARTCharReceived,
+		.pReceptionData = &m_nbCharReceived,
+		.cbTransmission = cbUARTCharToTransmit
+};
+
 //*****************************************************************************
 //
 // Called by the NVIC as a result of SysTick Timer rollover interrupt flag
@@ -119,8 +113,7 @@ void cbSPI(void);
 // RGB color changes.
 //
 //*****************************************************************************
-void
-SysTickIntHandler(void)
+static void SysTickIntHandler(void)
 {
 	unsigned long ulColors[3];
 	static unsigned char index2=0;
@@ -149,6 +142,33 @@ SysTickIntHandler(void)
 
 
 }
+static uint8_t m_frame[1024];
+static uint8_t m_pTxFrame[TX_FRAME_SIZE];
+
+static uint8_t* AllocData(void)
+{
+	return m_frame;
+//	pData = malloc(1024);
+}
+
+static void FreeData(uint8_t *pData)
+{
+//	free(pData);
+	pData = NULL;
+}
+
+static uint16_t nbReceivedFrame = 0;
+uint16_t m_lastFrameSize = 0;
+static void FrameReceived(void* pData, uint8_t *pMsg, uint16_t size)
+{
+	uint16_t *val = (uint16_t*)pData;
+
+	(*val)++;
+//	memcpy(m_frame, pMsg, size);
+	m_lastFrameSize = size;
+}
+
+static uint8_t comChannel = 0xFF;
 
 //*****************************************************************************
 ///
@@ -159,6 +179,8 @@ SysTickIntHandler(void)
 /// 			then manages the application context duties of the system.
 ///
 //*****************************************************************************
+static uint8_t car = 0xAA;
+static bool dbgCtedi = false;
 int
 main(void)
 {
@@ -173,9 +195,6 @@ main(void)
     //
     ROM_FPUEnable();
     ROM_FPUStackingEnable();
-
-
-
 
 
 
@@ -195,32 +214,18 @@ main(void)
     ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
     ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-
+    m_cpuClock = SysCtlClockGet();
 
     //------------ SPI Test -----------------
-//
-//    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-//    GPIOPinConfigure(GPIO_PB5_SSI2FSS);
-//    GPIOPinConfigure(GPIO_PB4_SSI2CLK);
-//    GPIOPinConfigure(GPIO_PB7_SSI2TX);
-//    GPIOPinConfigure(GPIO_PB6_SSI2RX);
-//    GPIOPinTypeSSI(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
-//
-//    SysCtlPeripheralEnable(SYSCTL_PERIPH_SSI2);
-//    SSIConfigSetExpClk(SSI2_BASE, SysCtlClockGet(), SSI_FRF_MOTO_MODE_0, SSI_MODE_SLAVE, 10000, 16);
-//
-//    SSIIntRegister(SSI2_BASE, cbSPI);
-//    SSIIntEnable(SSI2_BASE, NULL);
-    //------------ End SPI Test -----------------
 
 //------------------ UART Com Test ---------------------
-   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
-   GPIOPinConfigure(GPIO_PE4_U5RX);
-   GPIOPinConfigure(GPIO_PE5_U5TX);
-   GPIOPinTypeUART(GPIO_PORTE_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+   GPIOPinConfigure(GPIO_PB0_U1RX);
+   GPIOPinConfigure(GPIO_PB1_U1TX);
+   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART5);
-   UARTConfigSetExpClk(UART5_BASE, SysCtlClockGet(), 9600,
+   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+   UARTConfigSetExpClk(UART1_BASE, m_cpuClock, 9600,
                            (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
                             UART_CONFIG_WLEN_8));
 
@@ -232,9 +237,17 @@ main(void)
 //    UARTprintf("Type 'help' for a list of commands\n");
 //    UARTprintf("> ");
 
-    SerialLink_Init(0);
-    SerialLink_Write(0, "Hello World !!!", 16);
-
+//    SerialLink_Init(0, &serial);
+//    SerialLink_Write(0, "Hello World !!!", 16);
+   comChannel = SerialLinkFrameProtocoleInit(SERIAL1,
+		   B115200,
+		   BIT_8,
+		   PARITY_NONE,
+		   STOP_BIT_1,
+		   (cbNotifyRx_t)FrameReceived,
+		   &nbReceivedFrame,
+		   (cbAllocMsg_t)AllocData,
+		   (cbFreeMsg_t)FreeData);
     //
     // Initialize the RGB LED. AppRainbow typically only called from interrupt
     // context. Safe to call here to force initial color update because
@@ -256,9 +269,12 @@ main(void)
 //    SysTickPeriodSet(SysCtlClockGet());
 //    SysTickEnable();
 //    SysTickIntEnable();
+//    SysTickIntRegister(SysTickIntHandler);
     IntMasterEnable();
-
-
+    int i;
+    for (i = 0; i < TX_FRAME_SIZE; ++i) {
+		m_pTxFrame[i] = i;
+	}
 
     //
     // spin forever and wait for carriage returns or state changes.
@@ -274,23 +290,16 @@ main(void)
 //    	ulStatus[1] = (ulStatus[1]+3)%65536;
 //    	ulStatus[2] = (ulStatus[2]+6)%65536;
 
-        //
-        // Peek to see if a full command is ready for processing
-        //
-//        while(UARTPeek('\r') == -1)
-//        {
-//            //
-//            // millisecond delay.  A SysCtlSleep() here would also be OK.
-//            //
-//            SysCtlDelay(SysCtlClockGet() / (1000 / 3));
-//
-//        }
-//        UARTgets(g_cInput,sizeof(g_cInput));
 //        RGBProcess(g_cInput);
-    	SysCtlDelay(2 * (SysCtlClockGet() / 3));
-    	UARTCharPut(UART5_BASE, 0xAA);
-    	UARTCharPut(UART0_BASE, 'A');
-//    	SerialLink_Write(0, "Hello World !!!\n", 16);
+//    	SysCtlDelay(2 * (SysCtlClockGet() / 3));
+//    	UARTCharPut(UART1_BASE, car);
+//    	UARTCharPut(UART0_BASE, 'A');
+//    	SerialLink_Write(0, "A", 1);
+    	if(dbgCtedi)
+    	{
+    		dbgCtedi = false;
+    		SerialLinkFrameProtocole_Send(comChannel, m_pTxFrame, TX_FRAME_SIZE);
+    	}
     }
 }
 
@@ -329,7 +338,12 @@ void cbController(void)
 	GPIOPinIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
 }
 
-void cbSPI(void)
+//FIXME for test. Must not be here
+static uint8_t testReceivedChar;
+void cbUARTCharReceived(void *pData, uint8_t car)
 {
-
+	uint32_t *number = (uint32_t*)pData;
+	testReceivedChar = car;
+	(*number)++;
 }
+
