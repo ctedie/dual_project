@@ -46,18 +46,21 @@ PACK(typedef struct
 }) tExchangeHeader;
 
 /// \brief Exchange message structure
-PACK(typedef union
+PACK(typedef struct
 {
     tExchangeHeader header;
-    PACK(struct
+    PACK(union
     {
-        uint8_t data[MAX_DATA_SIZE];
-    }) req;
-    PACK(struct
-    {
-    	uint8_t status;
-        uint8_t data[MAX_DATA_SIZE];
-    }) ans;
+		PACK(struct
+		{
+			uint8_t data[MAX_DATA_SIZE];
+		}) req;
+		PACK(struct
+		{
+			uint8_t status;
+			uint8_t data[MAX_DATA_SIZE];
+		}) ans;
+    });
 }) tExchangeMsg;
 
 

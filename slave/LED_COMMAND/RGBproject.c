@@ -24,6 +24,7 @@
 
 
 #include <math.h>
+#include <RGBproject.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,10 +52,7 @@
 #include "drivers/rgb.h"
 #include "drivers/buttons.h"
 
-#include "RGBProject.h"
-#include "serial_link.h"
-#include "serial_link_frame_protocol.h"
-
+#include "control.h"
 
 /******************************************************************************
  * MACRO DEFINITIN
@@ -93,17 +91,6 @@ void cbController(void);
 void cbUARTCharReceived(void *pData, uint8_t car);
 bool cbUARTCharToTransmit(void* pData, uint8_t *car);
 
-uint32_t m_nbCharReceived = 0;
-SerialLinkConfig_t serial =
-{
-		.baudrate = B115200,
-		.dataSize = BIT_8,
-		.parity = PARITY_NONE,
-		.cbReception = cbUARTCharReceived,
-		.pReceptionData = &m_nbCharReceived,
-		.cbTransmission = cbUARTCharToTransmit
-};
-
 //*****************************************************************************
 //
 // Called by the NVIC as a result of SysTick Timer rollover interrupt flag
@@ -113,7 +100,7 @@ SerialLinkConfig_t serial =
 // RGB color changes.
 //
 //*****************************************************************************
-static void SysTickIntHandler(void)
+void SysTickIntHandler(void)
 {
 	unsigned long ulColors[3];
 	static unsigned char index2=0;
@@ -143,32 +130,6 @@ static void SysTickIntHandler(void)
 
 }
 static uint8_t m_frame[1024];
-static uint8_t m_pTxFrame[TX_FRAME_SIZE];
-
-static uint8_t* AllocData(void)
-{
-	return m_frame;
-//	pData = malloc(1024);
-}
-
-static void FreeData(uint8_t *pData)
-{
-//	free(pData);
-	pData = NULL;
-}
-
-static uint16_t nbReceivedFrame = 0;
-uint16_t m_lastFrameSize = 0;
-static void FrameReceived(void* pData, uint8_t *pMsg, uint16_t size)
-{
-	uint16_t *val = (uint16_t*)pData;
-
-	(*val)++;
-//	memcpy(m_frame, pMsg, size);
-	m_lastFrameSize = size;
-}
-
-static uint8_t comChannel = 0xFF;
 
 //*****************************************************************************
 ///
@@ -179,8 +140,6 @@ static uint8_t comChannel = 0xFF;
 /// 			then manages the application context duties of the system.
 ///
 //*****************************************************************************
-static uint8_t car = 0xAA;
-static bool dbgCtedi = false;
 int
 main(void)
 {
@@ -216,38 +175,22 @@ main(void)
 
     m_cpuClock = SysCtlClockGet();
 
+    Control_init();
     //------------ SPI Test -----------------
 
 //------------------ UART Com Test ---------------------
-   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-   GPIOPinConfigure(GPIO_PB0_U1RX);
-   GPIOPinConfigure(GPIO_PB1_U1TX);
-   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-
-   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
-   UARTConfigSetExpClk(UART1_BASE, m_cpuClock, 9600,
-                           (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
-                            UART_CONFIG_WLEN_8));
+//   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+//   GPIOPinConfigure(GPIO_PB0_U1RX);
+//   GPIOPinConfigure(GPIO_PB1_U1TX);
+//   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+//
+//   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+//   UARTConfigSetExpClk(UART1_BASE, m_cpuClock, 9600,
+//                           (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
+//                            UART_CONFIG_WLEN_8));
 
    //----------------- End UART Com Test------------------------
 
-//    UARTStdioInit(0);
-//
-//    UARTprintf("Welcome to the Stellaris LM4F120 LaunchPad!\n");
-//    UARTprintf("Type 'help' for a list of commands\n");
-//    UARTprintf("> ");
-
-//    SerialLink_Init(0, &serial);
-//    SerialLink_Write(0, "Hello World !!!", 16);
-   comChannel = SerialLinkFrameProtocoleInit(SERIAL1,
-		   B115200,
-		   BIT_8,
-		   PARITY_NONE,
-		   STOP_BIT_1,
-		   (cbNotifyRx_t)FrameReceived,
-		   &nbReceivedFrame,
-		   (cbAllocMsg_t)AllocData,
-		   (cbFreeMsg_t)FreeData);
     //
     // Initialize the RGB LED. AppRainbow typically only called from interrupt
     // context. Safe to call here to force initial color update because
@@ -271,10 +214,6 @@ main(void)
 //    SysTickIntEnable();
 //    SysTickIntRegister(SysTickIntHandler);
     IntMasterEnable();
-    int i;
-    for (i = 0; i < TX_FRAME_SIZE; ++i) {
-		m_pTxFrame[i] = i;
-	}
 
     //
     // spin forever and wait for carriage returns or state changes.
@@ -295,11 +234,6 @@ main(void)
 //    	UARTCharPut(UART1_BASE, car);
 //    	UARTCharPut(UART0_BASE, 'A');
 //    	SerialLink_Write(0, "A", 1);
-    	if(dbgCtedi)
-    	{
-    		dbgCtedi = false;
-    		SerialLinkFrameProtocole_Send(comChannel, m_pTxFrame, TX_FRAME_SIZE);
-    	}
     }
 }
 
@@ -327,23 +261,15 @@ void RGBProcess(char* pcStr)
 
 }
 
-static uint32_t status;
-static uint8_t state;
-
-void cbController(void)
+void RGB_SetColor(tRGBControl* color)
 {
+	uint32_t ulColors[3];
 
-	status = GPIOPinIntStatus(GPIO_PORTB_BASE, false);
-	state = GPIOPinRead(GPIO_PORTB_BASE, GPIO_PIN_5);
-	GPIOPinIntClear(GPIO_PORTB_BASE, GPIO_PIN_5);
-}
+    ulColors[RED] 	= (uint32_t)(color->red);
+    ulColors[GREEN] = (uint32_t)(color->green);
+    ulColors[BLUE] 	= (uint32_t)(color->blue);
 
-//FIXME for test. Must not be here
-static uint8_t testReceivedChar;
-void cbUARTCharReceived(void *pData, uint8_t car)
-{
-	uint32_t *number = (uint32_t*)pData;
-	testReceivedChar = car;
-	(*number)++;
+    RGBColorSet(ulColors);
+
 }
 

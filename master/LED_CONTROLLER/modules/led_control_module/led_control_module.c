@@ -55,6 +55,8 @@ typedef struct
 static uint8_t m_channelNumber = NULL;
 static tbuffMsg m_arrMsg[MAX_NB_MSG];
 
+static tRGBControl m_RGBStatus = {0, 0, 0, 0};
+static uint16_t m_cptErr;
 /////////////////////////////////////////////////////////////////////////////////
 // Exported variables
 /////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +102,6 @@ bool LED_CONTROL_Init(void)
 												   );
 
 
-
 	return true;
 }
 
@@ -114,7 +115,15 @@ bool LED_CONTROL_Init(void)
 /////////////////////////////////////////////////////////////////////////////////
 bool LED_CONTROL_RgbSend(tRGBControl* control)
 {
+	tExchangeMsg* pMsg;
 
+	pMsg = (tExchangeMsg*)AllocMsg();
+
+	pMsg->header.commandID = COMMAND_SET_RGB_CONTROL;
+	pMsg->header.datasize = sizeof(tRGBControl);
+	memcpy(pMsg->req.data, control, sizeof(tRGBControl));
+
+	SerialLinkFrameProtocole_Send(m_channelNumber, (uint8_t*)pMsg, (sizeof(tExchangeHeader) + sizeof(tRGBControl)));
 	return true;
 }
 
@@ -140,7 +149,7 @@ static uint8_t* AllocMsg(void)
 		if(m_arrMsg[i].isUsed == false)
 		{
 			m_arrMsg[i].isUsed = true;
-			return &(m_arrMsg[i].msg);
+			return (uint8_t*)&(m_arrMsg[i].msg);
 		}
 
 	}
@@ -183,16 +192,29 @@ static void process_data(void* pData, uint8_t *pMsg, uint16_t size)
 	switch (message->header.commandID)
 	{
 		case COMMAND_SET_RGB_CONTROL:
-
+			if(message->ans.status != STATUS_OK)
+			{
+				m_cptErr++;
+			}
 			break;
-		case COMAND_GET_RGB_CONTROL:
-
+		case COMMAND_GET_RGB_CONTROL:
+			if(message->header.datasize == sizeof(tRGBControl))
+			{
+				memcpy(&m_RGBStatus, message->ans.data, sizeof(tRGBControl));
+			}
 			break;
 		case COMMAND_GET_STATUS:
+			if(message->header.datasize == sizeof(tSlaveStatus))
+			{
+
+			}
 
 			break;
 		case COMMAND_GET_DATE_TIME:
+			if(message->header.datasize == sizeof(tDateTime))
+			{
 
+			}
 			break;
 		case COMMAND_UPDATE_DATE_TIME:
 

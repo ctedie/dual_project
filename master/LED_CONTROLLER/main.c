@@ -213,6 +213,7 @@ shutdown:
 /*
  *  ======== main ========
  */
+static tRGBControl cont = {.blue = 0xAAAA, .green = 0x5555, .red = 0x0CED, .luminosity = 0x0D};
 int main(void)
 {
     /* Call board init functions */
@@ -223,7 +224,8 @@ int main(void)
     Board_initUART();
 
 
-//    LED_CONTROL_Init();
+    LED_CONTROL_Init();
+    LED_CONTROL_RgbSend(&cont);
 //    FileSystem_Init();
 //    MNT_init();
     System_printf("Starting the TCP Echo example\nSystem provider is set to "

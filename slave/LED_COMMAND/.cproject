@@ -52,6 +52,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/DRIVER_LIB}&quot;"/>
 									<listOptionValue builtIn="false" value="${ProjDirPath}/../STELLARIS_LIB"/>
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/../../common&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/modules&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.1299698150" name="Debugging model" superClass="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL" value="com.ti.ccstudio.buildDefinitions.TMS470_15.12.compilerID.DEBUGGING_MODEL.SYMDEBUG__DWARF" valueType="enumerated"/>

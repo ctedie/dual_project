@@ -34,7 +34,7 @@ extern "C"
 /// \name List of Command ID between the 2 boards
 /// \{
 #define COMMAND_SET_RGB_CONTROL			1U
-#define COMAND_GET_RGB_CONTROL			2U
+#define COMMAND_GET_RGB_CONTROL			2U
 #define COMMAND_GET_STATUS				3U
 #define COMMAND_GET_DATE_TIME			4U
 #define COMMAND_UPDATE_DATE_TIME		5U
@@ -44,8 +44,13 @@ extern "C"
 // Exported types
 /////////////////////////////////////////////////////////////////////////////////
 
+typedef enum
+{
+	STATUS_OK,
+	STATUS_ERROR
+}tAnsStatus;
 
-/// \brief RGB Control structure
+/// \brief RGB Control structure (#COMMAND_SET_RGB_CONTROL & COMAND_GET_RGB_CONTROL)
 typedef struct
 {
 	uint16_t red;
@@ -57,7 +62,7 @@ typedef struct
 /// \name Date time exchange
 /// \{
 
-/// \brief Day of weef enum
+/// \brief Day of week enum
 typedef enum
 {
 	LUNDI,   //!< LUNDI

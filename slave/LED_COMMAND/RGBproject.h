@@ -8,6 +8,7 @@
 #ifndef RGBPROJECT_H_
 #define RGBPROJECT_H_
 
+#include "common.h"
 //typedef struct
 //{
 //	uint8_t red;
@@ -27,4 +28,8 @@ typedef union
 
 	}color;
 }T_COLOR;
+
+
+void RGB_SetColor(tRGBControl* color);
+
 #endif /* RGBPROJECT_H_ */
