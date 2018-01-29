@@ -42,7 +42,6 @@ extern "C"
 bool LED_CONTROL_RgbSend(tRGBControl* control);
 bool LED_CONTROL_Init(void);
 
-void LED_CONTROL_Test(uint16_t data);
 
 #ifdef __cplusplus
 }

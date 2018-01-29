@@ -496,7 +496,9 @@ static bool SendETX(tx_data_t *pDataTx, uint8_t *pCar)
 {
 	*pCar = ETX;
 
+	pDataTx->cbFreeMsg(pDataTx->pMsg);
 	pDataTx->pMsg = NULL;
+
 	//End of frame
 	pDataTx->cptFrameSent++;
 	pDataTx->cbNextState = EndTX;

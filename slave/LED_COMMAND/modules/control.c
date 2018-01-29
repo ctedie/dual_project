@@ -11,6 +11,19 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "inc/hw_types.h"
+#include "inc/hw_memmap.h"
+#include "inc/hw_hibernate.h"
+#include "inc/hw_ints.h"
+
+#include "driverlib/sysctl.h"
+#include "driverlib/rom.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/gpio.h"
+#include "driverlib/systick.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/uart.h"
+
 #include "control.h"
 #include "common.h"
 #include "exchange.h"
@@ -50,7 +63,14 @@ bool Control_init(void)
 		m_arrMsg[i].isUsed = false;
 	}
 
-	m_channelNumber = SerialLinkFrameProtocoleInit(SERIAL1,
+	   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+	   GPIOPinConfigure(GPIO_PB0_U1RX);
+	   GPIOPinConfigure(GPIO_PB1_U1TX);
+	   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+	   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
+
+	m_channelNumber = SerialLinkFrameProtocoleInit(SERIAL2,
 												   B115200,
 												   BIT_8,
 												   PARITY_NONE,

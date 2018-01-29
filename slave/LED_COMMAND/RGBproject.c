@@ -179,12 +179,6 @@ main(void)
     //------------ SPI Test -----------------
 
 //------------------ UART Com Test ---------------------
-//   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-//   GPIOPinConfigure(GPIO_PB0_U1RX);
-//   GPIOPinConfigure(GPIO_PB1_U1TX);
-//   GPIOPinTypeUART(GPIO_PORTB_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-//
-//   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART1);
 //   UARTConfigSetExpClk(UART1_BASE, m_cpuClock, 9600,
 //                           (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
 //                            UART_CONFIG_WLEN_8));

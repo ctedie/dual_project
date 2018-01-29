@@ -73,7 +73,7 @@ SerialLink_t m_SerialLinkList[NB_SERIAL] =
 		},
 
 		{
-				.uartBase = UART1_BASE,
+				.uartBase = UART7_BASE,
 		}
 };
 
@@ -82,12 +82,12 @@ static Hwi_Struct hwiStruct;
 
 static const uint32_t m_UARTPeriph[NB_SERIAL] =
 {
-		SYSCTL_PERIPH_UART0, SYSCTL_PERIPH_UART1, SYSCTL_PERIPH_UART2
+		SYSCTL_PERIPH_UART0, SYSCTL_PERIPH_UART7, SYSCTL_PERIPH_UART2
 };
 
 static const uint32_t m_UARTInt[NB_SERIAL] =
 {
-    INT_UART0, INT_UART1, INT_UART2
+    INT_UART0, INT_UART7, INT_UART2
 };
 
 typedef void (*pIntFunction)(void);

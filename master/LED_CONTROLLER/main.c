@@ -225,7 +225,7 @@ int main(void)
 
 
     LED_CONTROL_Init();
-    LED_CONTROL_RgbSend(&cont);
+//    LED_CONTROL_RgbSend(&cont);
 //    FileSystem_Init();
 //    MNT_init();
     System_printf("Starting the TCP Echo example\nSystem provider is set to "

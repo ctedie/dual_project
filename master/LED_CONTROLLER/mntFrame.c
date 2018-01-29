@@ -78,5 +78,4 @@ static void test(void *pData)
 {
 	uint16_t *donnees = (uint16_t*)pData;
 
-	LED_CONTROL_Test(*donnees);
 }
