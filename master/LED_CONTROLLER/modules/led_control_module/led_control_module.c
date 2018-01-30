@@ -160,9 +160,9 @@ void LED_CONTROL_Test(UArg arg0)
 	switch (nextColor)
 	{
 	case RED:
-		if(m_RGBControl.red < 0xFFFF)
+		if(m_RGBControl.red < 0xFFE0)
 		{
-			m_RGBControl.red++;
+			m_RGBControl.red += 0x20;
 		}
 		else
 		{
@@ -171,9 +171,9 @@ void LED_CONTROL_Test(UArg arg0)
 		}
 		break;
 	case GREEN:
-		if(m_RGBControl.green < 0xFFFF)
+		if(m_RGBControl.green < 0xFFE0)
 		{
-			m_RGBControl.green++;
+			m_RGBControl.green += 0x20;
 		}
 		else
 		{
@@ -183,9 +183,9 @@ void LED_CONTROL_Test(UArg arg0)
 
 		break;
 	case BLUE:
-		if(m_RGBControl.blue < 0xFFFF)
+		if(m_RGBControl.blue < 0xFFE0)
 		{
-			m_RGBControl.blue++;
+			m_RGBControl.blue += 0x20;
 		}
 		else
 		{
