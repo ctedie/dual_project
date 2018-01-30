@@ -347,6 +347,7 @@ static void waitDataWithDLE(rx_data_t *pDataRx, uint8_t car)
         //Liberer la memoire msg
         pDataRx->cbFreeMsg(pDataRx->pMsg);
         pDataRx->pMsg = NULL;
+        
     }
     else
     {
