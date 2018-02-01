@@ -5,8 +5,8 @@
  *      Author: Cédric
  */
 
-#ifndef RGBPROJECT_H_
-#define RGBPROJECT_H_
+#ifndef MAIN_H_
+#define MAIN_H_
 
 #include "common.h"
 //typedef struct
@@ -32,4 +32,4 @@ typedef union
 
 void RGB_SetColor(tRGBControl* color);
 
-#endif /* RGBPROJECT_H_ */
+#endif /* MAIN_H_ */
