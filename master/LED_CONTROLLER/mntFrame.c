@@ -46,7 +46,7 @@ void MNTProcess(uint8_t* pdata)
 					//TODO Error management
 				}
 				break;
-			case FILE_TRANSFERT:
+			case FILE_TRANSFER:
 				break;
 			case RGB_CONTROL:
 				LED_CONTROL_RgbSend((tRGBControl*)&frame->data[0]);

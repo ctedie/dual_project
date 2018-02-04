@@ -113,11 +113,11 @@ bool LED_CONTROL_Init(void)
 												   FreeMsg
 												   );
 
-	timer0 = Timer_create(Timer_ANY, LED_CONTROL_Test, NULL, NULL);
-	  key = Hwi_disable();
-	Timer_setPeriodMicroSecs(timer0, 5000); //5ms
-	  Timer_start(timer0);
-	  Hwi_restore(key);
+//	timer0 = Timer_create(Timer_ANY, LED_CONTROL_Test, NULL, NULL);
+//	  key = Hwi_disable();
+//	Timer_setPeriodMicroSecs(timer0, 5000); //5ms
+//	  Timer_start(timer0);
+//	  Hwi_restore(key);
 
 
 //	Timer_start(timer0);
@@ -160,9 +160,9 @@ void LED_CONTROL_Test(UArg arg0)
 	switch (nextColor)
 	{
 	case RED:
-		if(m_RGBControl.red < 0xFFE0)
+		if(m_RGBControl.red < 0xFE00)
 		{
-			m_RGBControl.red += 0x20;
+			m_RGBControl.red += 0x200;
 		}
 		else
 		{
@@ -171,9 +171,10 @@ void LED_CONTROL_Test(UArg arg0)
 		}
 		break;
 	case GREEN:
-		if(m_RGBControl.green < 0xFFE0)
+		if(m_RGBControl.green < 0xFE00)
 		{
-			m_RGBControl.green += 0x20;
+			m_RGBControl.green += 0x200;
+			nextColor = RED;
 		}
 		else
 		{
@@ -183,9 +184,10 @@ void LED_CONTROL_Test(UArg arg0)
 
 		break;
 	case BLUE:
-		if(m_RGBControl.blue < 0xFFE0)
+		if(m_RGBControl.blue < 0xFE00)
 		{
-			m_RGBControl.blue += 0x20;
+			m_RGBControl.blue += 0x200;
+			nextColor = RED;
 		}
 		else
 		{

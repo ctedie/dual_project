@@ -33,7 +33,7 @@ typedef struct
 enum eLED_COMMANDS
 {
 	LED_CONTROL = 1,
-	FILE_TRANSFERT,
+	FILE_TRANSFER,
 	RGB_CONTROL,
 	TEST
 };
